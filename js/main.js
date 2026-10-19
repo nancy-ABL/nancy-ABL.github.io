@@ -13,23 +13,27 @@ const M = 'media/';
 
 /* ── content ─────────────────────────────────────────── */
 // ar = width / height of the video
-const P = 9 / 16, F = 4 / 5, W = 16 / 9;
+const P = 9 / 16, F = 4 / 5;
+// anim: the brand's animated logo as a sprite sheet (media/logo/<id>-anim.webp); fit 'cover' fills the tile
 const CLIENTS = [
-  { id: 'bk', name: 'Burger King', tile: '#def6ee', items: [
+  { id: 'bk', name: 'Burger King', tile: '#def6ee', anim: true, items: [
     ['bk-whopper', 'Whopper', F], ['bk-reel', 'Reel', P], ['bk-maze', 'Maze', F],
     ['bk-99', 'Whopper for 99', F], ['bk-eid', 'Eid greeting', P], ['bk-post2', 'Iftar menu', P]] },
-  { id: 'domty', name: 'Domty', tile: '#def6ee', items: [
+  { id: 'ph', name: 'Pizza Hut', tile: '#def6ee', anim: true, items: [
+    ['ph-day', 'Animation day', P], ['ph-4', 'Rerouting', P], ['ph-anim7', 'Made with love', P], ['ph-12', '30% off', P],
+    ['ph-mybox', 'My box', F], ['ph-17', 'Saudi vs Morocco', P], ['ph-5', 'Half & half', P], ['ph-anim2', '30% in the app', F],
+    ['ph-p13', 'Notifications', P], ['ph-4x4', '4×4 deal', .566], ['ph-2', 'Personality', P], ['ph-jump', 'Jump game', .789],
+    ['ph-26', 'The body', P], ['ph-post7', 'Varieties', P], ['ph-ksa-iraq', 'Saudi vs Iraq', P]] },
+  { id: 'domty', name: 'Domty', tile: '#def6ee', anim: true, items: [
     ['domty-anim', 'Toast animation', P], ['domty-1', 'Pool day', F], ['domty-candy', 'Candy crush', F], ['domty-story', 'Story', P]] },
-  { id: 'larch', name: 'Larch', tile: '#320007', items: [
+  { id: 'larch', name: 'Larch', tile: '#3d2a73', anim: true, fit: 'cover', items: [
     ['larch-kv', 'Key visual', 2.15], ['larch-1', 'Post 1', P], ['larch-1b', 'Playground', P], ['larch-2', 'Post 2', P],
     ['larch-3', 'Croissant', P], ['larch-4', 'Summer', P], ['larch-11', 'Mini', P], ['larch-3b', 'Chocolate', P]] },
-  { id: 'lindo', name: 'Lindo', tile: '#def6ee', items: [
+  { id: 'lindo', name: 'Lindo', tile: '#def6ee', anim: true, items: [
     ['lindo-anim1', 'Animation 1', P], ['lindo-anim2', 'Animation 2', P], ['lindo-02', 'Laundry', P],
     ['lindo-dish', 'Dish wash', P], ['lindo-post2', 'Post 2', P]] },
   { id: 'brika', name: 'Brika', tile: '#def6ee', items: [
     ['brika-1', 'Post 1', P], ['brika-2', 'Post 2', P], ['brika-3', 'Post 3', P]] },
-  { id: 'cotton', name: 'Egyptian Cotton', tile: '#def6ee', items: [
-    ['cotton-1', 'Lasts longer', W]] },
 ];
 const TYPO = [
   { k: 'typo-chopstix', t: 'Chopstix', bg: '#000' },
@@ -46,9 +50,11 @@ const VO = [
   { k: 'vo-wholewheat', t: 'Domty Whole Wheat', d: 20, tall: true },
 ];
 const EDITS = [
-  { k: 'edit-promo', t: 'Promo — Vol. 02' },
-  { k: 'edit-gov', t: 'Gov — Vol. 2' },
-  { k: 'edit-test', t: 'Animation test' },
+  { k: 'edit-handmaid', t: 'The Handmaid’s Tale — unofficial promo', d: 45 },
+  { k: 'edit-exxon', t: 'ExxonMobil', d: 504 },
+  { k: 'edit-saudi2030', t: 'Saudi 2030', d: 58, tall: true },
+  { k: 'edit-cotton', t: 'Cotton Association', d: 26 },
+  { k: 'edit-rawaq', t: 'Rawaq App', d: 15 },
 ];
 
 /* ── shared pointer ──────────────────────────────────── */
@@ -194,17 +200,6 @@ const lb = (() => {
   whenVisible(name, tick);
 })();
 
-/* ── hero reel: cycles a few reels ───────────────────── */
-(() => {
-  const v = $('.hero-reel video'); if (!v) return;
-  const list = ['domty-anim', 'larch-1b', 'bk-reel', 'lindo-anim2', 'brika-2'];
-  let i = 0;
-  v.loop = false;
-  const load = () => { v.poster = M + list[i] + '.jpg'; v.src = M + list[i] + '.mp4'; v.play().catch(() => {}); };
-  v.addEventListener('ended', () => { i = (i + 1) % list.length; load(); });
-  if (!REDUCED) load();
-})();
-
 /* ── INDEX BANDS: swell + thicken by cursor distance ─── */
 (() => {
   const box = $('[data-bands]'); if (!box) return;
@@ -296,13 +291,13 @@ $$('[data-band]').forEach(el => {
     const v = $('video', cards[a]);
     if (seen) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); } else v.pause();
   }, { threshold: .3 }).observe(box);
-  $('[data-playlist="edits"]').addEventListener('click', () => lb.open(EDITS, 0));
   place(); restart();
 })();
 
-/* ── SOCIAL: client rows, reactive logos, lens marquees ── */
+/* ── SOCIAL: brand rows, animated logos, endless reel rows ─ */
 (() => {
   const host = $('[data-clients]'); if (!host) return;
+  const animMeta = fetch(M + 'logo/anim.json').then(r => r.json()).catch(() => ({}));
   CLIENTS.forEach((c, ci) => {
     const row = document.createElement('article');
     row.className = 'client';
@@ -313,134 +308,203 @@ $$('[data-band]').forEach(el => {
         <button class="logo" type="button" style="--tile:${c.tile}" aria-label="Watch ${c.name} work">
           <span class="logo-in"></span>
         </button>
-        <div><h3 class="client-name">${c.name}</h3>
-        <p class="client-count">${list.length} ${list.length === 1 ? 'piece' : 'reels & posts'}</p></div>
+        <h3 class="client-name">${c.name}</h3>
       </div>
-      <div class="reel" data-cursor="drag"><div class="track base"></div><div class="track lens"></div><div class="lens-frame"></div></div>`;
+      <div class="reel" data-cursor="drag"><div class="track"></div></div>`;
     host.appendChild(row);
     $('.logo', row).addEventListener('click', () => lb.open(list, 0));
-    logo($('.logo', row), M + 'logo/' + c.id + '.png');
+    logo($('.logo', row), c);
     marquee($('.reel', row), list, ci % 2 ? 1 : -1);
   });
 
-  // logo: sliced into strips that ripple, tilt and pop as the cursor comes near
-  function logo(tile, src) {
-    const inner = $('.logo-in', tile), N = 7, strips = [];
-    const img = new Image();
-    img.onload = () => {
-      const ar = img.naturalWidth / img.naturalHeight;
-      const fit = () => {
-        const tw = tile.clientWidth * .72, th = tile.clientHeight * .62;
-        const w = Math.min(tw, th * ar), h = w / ar;
-        inner.style.width = w + 'px'; inner.style.height = h + 'px';
-        strips.forEach((s, i) => { s.style.top = (i * h / N) + 'px'; s.style.height = (h / N + .6) + 'px'; s.firstChild.style.top = (-i * h / N) + 'px'; });
+  // logo: the brand's own logo animation plays when the cursor comes near; the tile tilts toward the cursor
+  function logo(tile, c) {
+    const inner = $('.logo-in', tile);
+    let play = () => {};
+    if (c.anim) {
+      const cv = document.createElement('canvas'), g = cv.getContext('2d');
+      inner.appendChild(cv);
+      if (c.fit === 'cover') tile.classList.add('cover');
+      const img = new Image();
+      let S = null, f = 0, running = false;
+      const draw = () => {
+        if (!S) return;
+        const sx = (f % S.cols) * S.w, sy = Math.floor(f / S.cols) * S.h;
+        g.clearRect(0, 0, cv.width, cv.height);
+        if (c.fit === 'cover') {
+          // crop the frame to the tile's shape
+          const ar = cv.width / cv.height, far = S.w / S.h;
+          let cw = S.w, ch = S.h; if (far > ar) cw = ch * ar; else ch = cw / ar;
+          g.drawImage(img, sx + (S.w - cw) / 2, sy + (S.h - ch) / 2, cw, ch, 0, 0, cv.width, cv.height);
+        } else g.drawImage(img, sx, sy, S.w, S.h, 0, 0, cv.width, cv.height);
       };
-      for (let i = 0; i < N; i++) {
-        const s = document.createElement('span'); s.className = 'logo-sl';
-        const im = document.createElement('img'); im.src = src; im.alt = ''; im.draggable = false;
-        s.appendChild(im); inner.appendChild(s); strips.push(s);
-      }
-      fit(); addEventListener('resize', fit);
-    };
-    img.src = src;
-    let p = 0, popped = false, rx = 0, ry = 0;
-    const tick = (dt, now) => {
+      const size = () => {
+        if (!S) return;
+        const dpr = Math.min(2, devicePixelRatio || 1);
+        let w, h;
+        if (c.fit === 'cover') { w = tile.clientWidth; h = tile.clientHeight; }
+        else {
+          const tw = tile.clientWidth * .74, th = tile.clientHeight * .7, ar = S.w / S.h;
+          w = Math.min(tw, th * ar); h = w / ar;
+        }
+        cv.style.width = w + 'px'; cv.style.height = h + 'px';
+        cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+        draw();
+      };
+      Promise.all([animMeta, new Promise(r => { img.onload = r; img.src = M + 'logo/' + c.id + '-anim.webp'; })]).then(([m]) => {
+        S = m[c.id]; if (!S) return;
+        f = S.n - 1; size(); addEventListener('resize', size);
+        // play once when the row first comes into view
+        new IntersectionObserver(([e], o) => { if (e.isIntersecting) { play(); o.disconnect(); } }, { threshold: .7 }).observe(tile);
+      });
+      let t0 = 0;
+      play = () => { if (!S || running) return; running = true; f = 0; t0 = performance.now(); draw(); };
+      ticks.add((dt, now) => {
+        if (!running) return;
+        // frames follow the clock, so the logo keeps its real speed even on a slow device
+        f = Math.min(S.n - 1, Math.floor((now - t0) / 1000 * S.fps));
+        if (f >= S.n - 1) running = false;
+        draw();
+      });
+    } else {
+      const im = document.createElement('img'); im.src = M + 'logo/' + c.id + '.png'; im.alt = ''; im.draggable = false;
+      inner.appendChild(im);
+      play = () => { tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); };
+    }
+    let p = 0, armed = true, rx = 0, ry = 0;
+    const tick = () => {
       const r = tile.getBoundingClientRect();
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      const d = Math.hypot(ptr.x - cx, ptr.y - cy);
-      const target = ptr.active ? clamp(1 - d / (r.width * 1.25)) : 0;
+      const target = ptr.active ? clamp(1 - Math.hypot(ptr.x - cx, ptr.y - cy) / (r.width * 1.3)) : 0;
       p = lerp(p, target, .1);
-      if (p > .72 && !popped) { popped = true; tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); }
-      if (p < .3) popped = false;
+      if (p > .45 && armed) { armed = false; play(); }
+      if (p < .12) armed = true;
       const nx = clamp((ptr.x - cx) / r.width, -1, 1), ny = clamp((ptr.y - cy) / r.height, -1, 1);
       rx = lerp(rx, ptr.active ? nx : 0, .1); ry = lerp(ry, ptr.active ? ny : 0, .1);
-      const t = now / 1000;
-      inner.style.transform = `rotateY(${rx * p * 22}deg) rotateX(${-ry * p * 22}deg) scale(${1 + p * .12})`;
-      strips.forEach((s, i) => {
-        const o = REDUCED ? 0 : Math.sin(t * 9 + i * 1.15) * p * 11;
-        s.style.transform = `translateX(${o.toFixed(2)}px)`;
-      });
+      tile.style.transform = `perspective(700px) rotateY(${rx * p * 16}deg) rotateX(${-ry * p * 16}deg) scale(${1 + p * .06})`;
     };
     if (FINE) whenVisible(tile, tick);
-    else {
-      // touch: ripple once when the row scrolls into view
-      new IntersectionObserver(([e]) => { if (e.isIntersecting) { tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); } }, { threshold: .8 }).observe(tile);
-    }
+    else tile.addEventListener('pointerdown', () => play());
   }
 
-  // marquee: a dimmed base track, a full-colour "lens" track clipped to the frame in the middle
+  // an endless row of the brand's reels, all playing, drifting sideways
   function marquee(reel, list, dir) {
-    const base = $('.track.base', reel), lens = $('.track.lens', reel), frame = $('.lens-frame', reel);
-    let H = 0, Wc = 0, LW = 0, setW = 0, x = 0, speed = 1, vids = [], offs = [], gap = 14;
+    const track = $('.track', reel);
+    let H = 0, Wc = 0, setW = 0, x = 0, speed = 1, vids = [], offs = [];
     const build = () => {
       H = reel.clientHeight; Wc = reel.clientWidth;
-      LW = Math.round(H * P + 24);
-      reel.style.setProperty('--lw', LW + 'px');
-      lens.style.setProperty('--cut', ((Wc - LW) / 2 + 3) + 'px');
-      // repeat the client's pieces until a set is wider than the reel
+      const gap = Math.round(clamp(H * .08, 16, 30));
+      track.style.gap = gap + 'px';
       let seq = [], w = 0;
-      while (w < Wc + LW || seq.length < 2) { list.forEach(it => { seq.push(it); w += H * it.ar + gap; }); }
+      while (w < Wc + 200 || seq.length < 2) list.forEach(it => { seq.push(it); w += Math.round(H * it.ar) + gap; });
       setW = w;
-      const html = (withVideo) => [...seq, ...seq].map((it, i) => {
-        const wd = Math.round(H * it.ar);
+      track.innerHTML = [...seq, ...seq].map(it => {
         const ix = list.indexOf(it);
-        return `<div class="it" style="width:${wd}px" data-i="${ix}">${withVideo
-          ? `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4"></video>`
-          : `<img src="${M + it.k}.jpg" alt="${it.t}" loading="lazy" decoding="async">`}</div>`;
+        return `<div class="it" style="width:${Math.round(H * it.ar)}px" data-i="${ix}">` +
+          `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4" aria-label="${it.t}"></video></div>`;
       }).join('');
-      base.innerHTML = html(false); lens.innerHTML = html(true);
-      vids = $$('video', lens); offs = [];
-      let o = 0; $$('.it', lens).forEach(el => { const wd = parseFloat(el.style.width); offs.push([o, o + wd]); o += wd + gap; });
+      vids = $$('video', track); offs = [];
+      let o = 0; $$('.it', track).forEach(el => { const wd = parseFloat(el.style.width); offs.push([o, o + wd]); o += wd + gap; });
       x = dir < 0 ? 0 : -setW;
+      playing.clear();
     };
+    const playing = new Set();
     build();
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 200); });
 
-    // pointer: hover slows, drag scrubs, a click without drag opens the piece
     let hover = false, drag = null, moved = 0;
     reel.addEventListener('pointerenter', () => hover = true);
-    reel.addEventListener('pointerleave', () => { hover = false; });
+    reel.addEventListener('pointerleave', () => hover = false);
     reel.addEventListener('pointerdown', e => { drag = { x: e.clientX, x0: x }; moved = 0; reel.setPointerCapture(e.pointerId); reel.classList.add('drag'); });
     reel.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x; moved = Math.max(moved, Math.abs(dx)); x = drag.x0 + dx; });
-    const end = e => {
+    reel.addEventListener('pointerup', e => {
       if (!drag) return;
       reel.classList.remove('drag');
       if (moved < 6) {
-        // which piece is under the pointer?
         const rx = e.clientX - reel.getBoundingClientRect().left - x;
-        let hit = -1;
-        offs.forEach(([a, b], i) => { if (rx >= a && rx <= b) hit = i; });
-        const el = hit >= 0 ? $$('.it', lens)[hit] : null;
-        if (el) lb.open(list, +el.dataset.i);
+        const hit = offs.findIndex(([a, b]) => rx >= a && rx <= b);
+        if (hit >= 0) lb.open(list, +$$('.it', track)[hit].dataset.i);
       }
       drag = null;
-    };
-    reel.addEventListener('pointerup', end);
+    });
     reel.addEventListener('pointercancel', () => { drag = null; reel.classList.remove('drag'); });
     reel.addEventListener('keydown', e => { if (e.key === 'Enter') lb.open(list, 0); });
     reel.tabIndex = 0; reel.setAttribute('role', 'button'); reel.setAttribute('aria-label', 'Open the reels in the player');
 
-    const playing = new Set();
     const tick = dt => {
-      const target = drag ? 0 : REDUCED ? 0 : hover ? .22 : 1;
-      speed = lerp(speed, target, .08);
-      if (!drag) x += dir * 46 * speed * dt;
-      // keep x inside one set width
+      speed = lerp(speed, drag || REDUCED ? 0 : hover ? .2 : 1, .08);
+      if (!drag) x += dir * 38 * speed * dt;
       while (x <= -setW) x += setW;
       while (x > 0) x -= setW;
-      const tf = `translate3d(${x.toFixed(2)}px,0,0)`;
-      base.style.transform = lens.style.transform = tf;
-      // play only the videos inside the lens
-      const l0 = (Wc - LW) / 2 - x, l1 = l0 + LW;
+      track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+      // only the cards on screen play
+      const l0 = -x - 40, l1 = -x + Wc + 40;
       offs.forEach(([a, b], i) => {
-        const v = vids[i], inLens = b > l0 && a < l1;
-        if (inLens && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
-        else if (!inLens && playing.has(v)) { v.pause(); playing.delete(v); }
+        const v = vids[i], on = b > l0 && a < l1;
+        if (on && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
+        else if (!on && playing.has(v)) { v.pause(); playing.delete(v); }
       });
     };
     tick.visible = on => { if (!on) { playing.forEach(v => v.pause()); playing.clear(); } };
     whenVisible(reel, tick);
   }
+})();
+
+/* ── VIDEO EDIT: one big screen and the list of edits ─── */
+(() => {
+  const list = $('[data-ed-list]'), vid = $('[data-ed-video]'), frame = $('[data-ed-frame]');
+  if (!list) return;
+  const title = $('[data-ed-title]'), len = $('[data-ed-len]');
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const select = (i, go) => {
+    const it = EDITS[i];
+    $$('button', list).forEach((b, k) => b.classList.toggle('on', k === i));
+    frame.classList.toggle('tall', !!it.tall);
+    vid.poster = M + it.k + '.jpg'; vid.src = M + it.k + '.mp4';
+    title.textContent = it.t; len.textContent = fmt(it.d);
+    if (go) vid.play().catch(() => {});
+  };
+  EDITS.forEach((it, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span class="ed-th"><video muted playsinline loop preload="none" poster="${M + it.k}.jpg"></video></span>` +
+      `<span class="ed-t">${it.t}</span><span class="ed-d">${fmt(it.d)}</span></button>`;
+    const b = li.firstChild, pv = $('video', b);
+    b.onclick = () => { select(i, true); if (innerWidth < 900) frame.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+    // hover: a muted preview of the edit
+    b.onpointerenter = () => { if (!FINE) return; if (!pv.src) pv.src = M + it.k + '.mp4'; pv.play().catch(() => {}); };
+    b.onpointerleave = () => pv.pause();
+    list.appendChild(li);
+  });
+  select(0, false);
+  new IntersectionObserver(([e]) => { if (!e.isIntersecting) vid.pause(); }).observe(frame);
+
+  // the slogan: letters thicken near the cursor, and a cut runs across it on the beat while an edit plays
+  const sl = $('[data-slogan-cursor]');
+  const L = [];
+  const words = sl.textContent.trim().split(' '); sl.textContent = '';
+  words.forEach(w => {
+    const wd = document.createElement('span'); wd.className = 'wd'; wd.setAttribute('aria-hidden', 'true');
+    [...w].forEach(ch => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = ch; wd.appendChild(s); L.push({ s, w: 160 }); });
+    sl.appendChild(wd);
+  });
+  const tick = (dt, now) => {
+    const live = !vid.paused && !vid.ended;
+    const beat = (now / 1000) * 2; // 120 bpm
+    L.forEach((l, i) => {
+      let p = 0;
+      if (live && !REDUCED) {
+        const ph = ((beat - i / L.length) % 1 + 1) % 1;
+        p = Math.max(0, 1 - ph * 4);
+      } else if (FINE && ptr.active) {
+        const b = l.s.getBoundingClientRect();
+        p = .85 * clamp(1 - Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2)) / 240);
+      }
+      l.w = lerp(l.w, 120 + p * 780, live ? .4 : .12);
+      l.s.style.setProperty('--w', l.w.toFixed(0));
+      l.s.style.setProperty('--lc', p > .6 ? 'var(--sun)' : 'var(--ink)');
+    });
+  };
+  whenVisible(sl, tick);
 })();
 
 /* ── TYPO & LOGO: the ring ───────────────────────────── */
@@ -637,7 +701,7 @@ $$('[data-band]').forEach(el => {
 
 /* ── entrances, nav state, clock ─────────────────────── */
 (() => {
-  const groups = ['.hero-foot > *', '.services-head > *', '.client-id', '.sec-note', '.slogan', '.vo-list li', '.vo-stage', '.contact > *', '.typo-list'];
+  const groups = ['.hero-foot > *', '.ed-list li', '.ed-stage', '.services-head > *', '.client-id', '.sec-note', '.slogan', '.vo-list li', '.vo-stage', '.contact > *', '.typo-list'];
   groups.forEach(sel => $$(sel).forEach((el, i) => { el.classList.add('rise'); el.style.setProperty('--d', (i % 6) * 75 + 'ms'); }));
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
   $$('.rise').forEach(el => io.observe(el));
@@ -646,7 +710,7 @@ $$('[data-band]').forEach(el => {
   const nio = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
   }), { rootMargin: '-45% 0px -50% 0px' });
-  ['social', 'typo', 'voice', 'contact'].forEach(id => nio.observe(document.getElementById(id)));
+  ['social', 'edit', 'typo', 'voice', 'contact'].forEach(id => nio.observe(document.getElementById(id)));
 
   const clock = $('[data-clock]');
   const tickClock = () => {
