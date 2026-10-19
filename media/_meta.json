@@ -1,0 +1,275 @@
+{
+ "bk-whopper": {
+  "w": 720,
+  "h": 900,
+  "d": 9.71,
+  "audio": true,
+  "mb": 1.23
+ },
+ "bk-reel": {
+  "w": 720,
+  "h": 1280,
+  "d": 16.12,
+  "audio": true,
+  "mb": 1.73
+ },
+ "bk-maze": {
+  "w": 720,
+  "h": 900,
+  "d": 12.73,
+  "audio": true,
+  "mb": 1.16
+ },
+ "bk-99": {
+  "w": 720,
+  "h": 900,
+  "d": 7.7,
+  "audio": true,
+  "mb": 0.36
+ },
+ "bk-eid": {
+  "w": 720,
+  "h": 1280,
+  "d": 4.67,
+  "audio": true,
+  "mb": 0.62
+ },
+ "bk-post2": {
+  "w": 720,
+  "h": 1280,
+  "d": 5.11,
+  "audio": true,
+  "mb": 1.54
+ },
+ "brika-1": {
+  "w": 720,
+  "h": 1280,
+  "d": 10.54,
+  "audio": true,
+  "mb": 2.3
+ },
+ "brika-2": {
+  "w": 720,
+  "h": 1280,
+  "d": 11.75,
+  "audio": true,
+  "mb": 1.61
+ },
+ "brika-3": {
+  "w": 720,
+  "h": 1280,
+  "d": 9.21,
+  "audio": true,
+  "mb": 0.99
+ },
+ "domty-anim": {
+  "w": 720,
+  "h": 1280,
+  "d": 17.96,
+  "audio": true,
+  "mb": 1.86
+ },
+ "domty-1": {
+  "w": 720,
+  "h": 900,
+  "d": 15.87,
+  "audio": true,
+  "mb": 1.24
+ },
+ "domty-candy": {
+  "w": 720,
+  "h": 900,
+  "d": 8.04,
+  "audio": true,
+  "mb": 0.43
+ },
+ "domty-story": {
+  "w": 720,
+  "h": 1280,
+  "d": 15.0,
+  "audio": true,
+  "mb": 1.09
+ },
+ "larch-kv": {
+  "w": 1280,
+  "h": 596,
+  "d": 10.0,
+  "audio": false,
+  "mb": 0.16
+ },
+ "larch-1": {
+  "w": 720,
+  "h": 1280,
+  "d": 9.33,
+  "audio": true,
+  "mb": 1.91
+ },
+ "larch-1b": {
+  "w": 720,
+  "h": 1280,
+  "d": 11.83,
+  "audio": true,
+  "mb": 1.79
+ },
+ "larch-2": {
+  "w": 720,
+  "h": 1280,
+  "d": 10.96,
+  "audio": true,
+  "mb": 1.34
+ },
+ "larch-3": {
+  "w": 720,
+  "h": 1280,
+  "d": 9.08,
+  "audio": true,
+  "mb": 2.37
+ },
+ "larch-4": {
+  "w": 720,
+  "h": 1280,
+  "d": 8.17,
+  "audio": true,
+  "mb": 0.72
+ },
+ "larch-11": {
+  "w": 720,
+  "h": 1280,
+  "d": 6.92,
+  "audio": true,
+  "mb": 1.98
+ },
+ "larch-3b": {
+  "w": 720,
+  "h": 1280,
+  "d": 7.04,
+  "audio": false,
+  "mb": 0.65
+ },
+ "lindo-anim1": {
+  "w": 720,
+  "h": 1280,
+  "d": 7.25,
+  "audio": true,
+  "mb": 0.4
+ },
+ "lindo-anim2": {
+  "w": 720,
+  "h": 1280,
+  "d": 10.0,
+  "audio": true,
+  "mb": 0.96
+ },
+ "lindo-02": {
+  "w": 720,
+  "h": 1280,
+  "d": 8.62,
+  "audio": true,
+  "mb": 0.87
+ },
+ "lindo-dish": {
+  "w": 720,
+  "h": 1280,
+  "d": 7.04,
+  "audio": true,
+  "mb": 1.31
+ },
+ "lindo-post2": {
+  "w": 720,
+  "h": 1280,
+  "d": 11.0,
+  "audio": true,
+  "mb": 1.34
+ },
+ "cotton-1": {
+  "w": 1280,
+  "h": 720,
+  "d": 26.04,
+  "audio": true,
+  "mb": 4.66
+ },
+ "edit-promo": {
+  "w": 1280,
+  "h": 720,
+  "d": 44.92,
+  "audio": true,
+  "mb": 3.91
+ },
+ "edit-gov": {
+  "w": 720,
+  "h": 1280,
+  "d": 57.58,
+  "audio": true,
+  "mb": 16.16
+ },
+ "edit-test": {
+  "w": 1280,
+  "h": 720,
+  "d": 14.96,
+  "audio": true,
+  "mb": 0.74
+ },
+ "typo-chopstix": {
+  "w": 720,
+  "h": 1280,
+  "d": 5.0,
+  "audio": true,
+  "mb": 0.12
+ },
+ "typo-fetar": {
+  "w": 720,
+  "h": 1280,
+  "d": 6.0,
+  "audio": true,
+  "mb": 0.08
+ },
+ "typo-jazzeel": {
+  "w": 1280,
+  "h": 720,
+  "d": 4.04,
+  "audio": false,
+  "mb": 0.07
+ },
+ "typo-larch": {
+  "w": 1280,
+  "h": 1280,
+  "d": 2.63,
+  "audio": false,
+  "mb": 0.12
+ },
+ "vo-kelloggs": {
+  "w": 1280,
+  "h": 720,
+  "d": 65.42,
+  "audio": true,
+  "mb": 11.13
+ },
+ "vo-cooks": {
+  "w": 1280,
+  "h": 720,
+  "d": 31.17,
+  "audio": true,
+  "mb": 5.68
+ },
+ "vo-bam": {
+  "w": 1280,
+  "h": 720,
+  "d": 27.71,
+  "audio": true,
+  "mb": 13.48
+ },
+ "vo-atyab": {
+  "w": 720,
+  "h": 1280,
+  "d": 27.83,
+  "audio": true,
+  "mb": 3.6
+ },
+ "vo-wholewheat": {
+  "w": 720,
+  "h": 1280,
+  "d": 20.04,
+  "audio": true,
+  "mb": 1.68
+ }
+}
