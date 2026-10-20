@@ -10,6 +10,7 @@ const pick = a => a[(Math.random() * a.length) | 0];
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const M = 'media/';
+const LOGO_V = '3'; // bump when the logo sprites change, so browsers fetch the new ones
 // motion on/off: starts off for reduced-motion users, remembered per visitor
 let PAUSED = REDUCED;
 try { const s = localStorage.getItem('nancy-motion'); if (s) PAUSED = s === 'off'; } catch (e) {}
@@ -62,7 +63,7 @@ const VO = [
 ];
 const EDITS = [
   { k: 'edit-handmaid', t: 'The Handmaid’s Tale — unofficial promo', d: 45 },
-  { k: 'edit-exxon', t: 'ExxonMobil', d: 504 },
+  { k: 'edit-exxon', t: 'ExxonMobil', d: 147 },
   { k: 'edit-saudi2030', t: 'Saudi 2030', d: 58, tall: true },
   { k: 'edit-cotton', t: 'Cotton Association', d: 26 },
   { k: 'edit-rawaq', t: 'Rawaq App', d: 15 },
@@ -149,86 +150,83 @@ const lb = (() => {
   return { open(l, at = 0) { list = l; i = at; dlg.showModal(); show(); } };
 })();
 
-/* ── NAME: letters shuffle fonts & shapes near the cursor ─ */
-(() => {
-  const name = $('.name');
-  const FONTS = [
-    ['"Bungee Shade"', 'normal', 400, 1], ['Monoton', 'normal', 400, .95], ['"Rubik Mono One"', 'normal', 400, .9],
-    ['Shrikhand', 'normal', 400, 1], ['"Major Mono Display"', 'normal', 400, 1.05], ['"Climate Crisis"', 'normal', 400, .9],
-    ['"Bodoni Moda"', 'italic', 900, 1.1], ['Syne', 'normal', 800, 1], ['"Bagel Fat One"', 'normal', 400, 1],
-    ['"Rubik Puddles"', 'normal', 400, 1], ['Silkscreen', 'normal', 400, .9], ['Unbounded', 'normal', 900, .9],
-    ['"Instrument Serif"', 'italic', 400, 1.25], ['"Rampart One"', 'normal', 400, 1], ['Fascinate', 'normal', 400, 1],
-    ['Fraunces', 'italic', 200, 1.05],
-  ];
-  const INK = ['#def6ee', '#46ffc7', '#ffce1d'];
-  const SHAPES = [
-    c => `<circle cx="50" cy="50" r="48" fill="${c}"/>`,
-    c => `<path d="M50 0l12 34 36-2-29 21 12 35-31-21-31 21 12-35L2 32l36 2z" fill="${c}"/>`,
-    c => `<path d="M50 4l48 88H2z" fill="${c}"/>`,
-    c => `<rect x="4" y="4" width="92" height="92" rx="30" fill="${c}"/>`,
-    c => `<path d="M50 0c8 18 8 18 26 8-6 19-6 19 16 18-16 13-16 13 0 26-22-1-22-1-16 18-18-10-18-10-26 8-8-18-8-18-26-8 6-19 6-19-16-18 16-13 16-13 0-26 22 1 22 1 16-18 18 10 18 10 26-8z" fill="${c}"/>`,
-    c => `<path d="M2 98V50a48 48 0 0 1 96 0v48z" fill="${c}"/>`,
-    c => `<path d="M36 2h28v34h34v28H64v34H36V64H2V36h34z" fill="${c}"/>`,
-    c => `<circle cx="50" cy="50" r="40" fill="none" stroke="${c}" stroke-width="16"/>`,
-  ];
+/* ── SHUFFLE: letters swap fonts & shapes near the cursor (the name, the contact line) ─ */
+const SHUFFLE_FONTS = [
+  ['"Bungee Shade"', 'normal', 400, 1], ['Monoton', 'normal', 400, .95], ['"Rubik Mono One"', 'normal', 400, .9],
+  ['Shrikhand', 'normal', 400, 1], ['"Major Mono Display"', 'normal', 400, 1.05], ['"Climate Crisis"', 'normal', 400, .9],
+  ['"Bodoni Moda"', 'italic', 900, 1.1], ['Syne', 'normal', 800, 1], ['"Bagel Fat One"', 'normal', 400, 1],
+  ['"Rubik Puddles"', 'normal', 400, 1], ['Silkscreen', 'normal', 400, .9], ['Unbounded', 'normal', 900, .9],
+  ['"Instrument Serif"', 'italic', 400, 1.25], ['"Rampart One"', 'normal', 400, 1], ['Fascinate', 'normal', 400, 1],
+  ['Fraunces', 'italic', 200, 1.05],
+];
+const SHAPES = [
+  c => `<circle cx="50" cy="50" r="48" fill="${c}"/>`,
+  c => `<path d="M50 0l12 34 36-2-29 21 12 35-31-21-31 21 12-35L2 32l36 2z" fill="${c}"/>`,
+  c => `<path d="M50 4l48 88H2z" fill="${c}"/>`,
+  c => `<rect x="4" y="4" width="92" height="92" rx="30" fill="${c}"/>`,
+  c => `<path d="M50 0c8 18 8 18 26 8-6 19-6 19 16 18-16 13-16 13 0 26-22-1-22-1-16 18-18-10-18-10-26 8-8-18-8-18-26-8 6-19 6-19-16-18 16-13 16-13 0-26 22 1 22 1 16-18 18 10 18 10 26-8z" fill="${c}"/>`,
+  c => `<path d="M2 98V50a48 48 0 0 1 96 0v48z" fill="${c}"/>`,
+  c => `<path d="M36 2h28v34h34v28H64v34H36V64H2V36h34z" fill="${c}"/>`,
+  c => `<circle cx="50" cy="50" r="40" fill="none" stroke="${c}" stroke-width="16"/>`,
+];
+// root: the heading. groups: elements whose data-word gets split into letters. inks: colours that read on this ground
+const shuffleText = (root, groups, inks) => {
   const letters = [];
-  $$('.name-line', name).forEach(line => {
-    [...line.dataset.word].forEach(ch => {
-      const s = document.createElement('span'); s.className = 'ch'; s.setAttribute('aria-hidden', 'true');
+  groups.forEach(gr => {
+    [...gr.dataset.word].forEach(ch => {
+      if (ch === ' ') { gr.appendChild(document.createTextNode(' ')); return; }
+      const s = document.createElement('span'); s.className = 'ch';
       const g = document.createElement('span'); g.className = 'g'; g.textContent = ch;
-      s.appendChild(g); line.appendChild(s);
-      letters.push({ s, g, ch, next: 0, dirty: false, settle: 0, hot: false });
+      s.appendChild(g); gr.appendChild(s);
+      letters.push({ s, g, ch, next: 0, dirty: false, settle: 0, r: null });
     });
   });
+  let fs = 100;
   // lock each letter's width (in em) to its base glyph so the line never reflows
-  const lock = () => letters.forEach(L => {
-    const fs = parseFloat(getComputedStyle(name).fontSize);
-    L.s.style.width = ''; L.s.style.width = (L.g.getBoundingClientRect().width / fs) + 'em';
-  });
-  const reset = L => {
-    L.g.className = 'g'; L.g.textContent = L.ch; L.g.removeAttribute('style'); L.dirty = false;
+  const lock = () => {
+    fs = parseFloat(getComputedStyle(root).fontSize);
+    letters.forEach(L => { L.s.style.width = ''; });
+    const ws = letters.map(L => L.g.getBoundingClientRect().width);
+    letters.forEach((L, i) => { L.s.style.width = (ws[i] / fs) + 'em'; });
   };
+  const reset = L => { L.g.className = 'g'; L.g.textContent = L.ch; L.g.removeAttribute('style'); L.dirty = false; };
   const shuffle = L => {
     L.dirty = true;
     const g = L.g, r = Math.random();
     g.removeAttribute('style'); g.className = 'g';
     if (r < .14) {
       g.className = 'g shape';
-      g.innerHTML = `<svg viewBox="0 0 100 100">${pick(SHAPES)(pick(INK))}</svg>`;
+      g.innerHTML = `<svg viewBox="0 0 100 100">${pick(SHAPES)(pick(inks))}</svg>`;
       g.style.transform = `rotate(${rand(-40, 40)}deg) scale(${rand(.8, 1.05)})`;
       return;
     }
     g.textContent = L.ch;
-    const [f, st, w, sc] = pick(FONTS);
+    const [f, st, w, sc] = pick(SHUFFLE_FONTS);
     g.style.fontFamily = f; g.style.fontStyle = st; g.style.fontWeight = w;
     g.style.fontVariationSettings = 'normal';
-    const c = pick(INK);
+    const c = pick(inks);
     if (r < .30) { g.style.color = 'transparent'; g.style.webkitTextStroke = `.028em ${c}`; }
     else if (r < .40) { g.className = 'g chip'; }
     else g.style.color = c;
     g.style.transform = `rotate(${REDUCED ? 0 : rand(-12, 12)}deg) scale(${sc * rand(.88, 1.08)})`;
   };
-  // sweep: a wave of shuffles that runs across the name, then settles
+  // sweep: a wave of shuffles that runs across the letters, then settles
   const sweep = (gap = 55, n = 5) => letters.forEach((L, i) => {
     for (let k = 0; k < n; k++) setTimeout(() => shuffle(L), i * gap + k * 85);
     setTimeout(() => reset(L), i * gap + n * 85 + 120);
   });
-  document.fonts.ready.then(() => {
-    lock();
-    if (!PAUSED) setTimeout(() => sweep(), 500);
-  });
+  document.fonts.ready.then(lock);
   addEventListener('resize', () => { letters.forEach(reset); lock(); });
-  name.addEventListener('touchstart', () => sweep(30, 4), { passive: true });
+  root.addEventListener('touchstart', () => sweep(30, 4), { passive: true });
 
-  let idle = 0, box = null, fs = 100;
+  let idle = 0;
   const tick = (dt, now) => {
     const R = fs * .85;
     let anyHot = false;
     for (const L of letters) {
       const b = L.r;
       const d = b ? Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2)) : 1e9;
-      const hot = d < R;
-      if (hot) {
+      if (d < R) {
         anyHot = true;
         if (now > L.next) { shuffle(L); L.next = now + rand(70, 170) + (d / R) * 120; }
         L.settle = now + 260;
@@ -238,13 +236,30 @@ const lb = (() => {
     idle = anyHot ? 0 : idle + dt;
     if (!PAUSED && idle > 9) { idle = 0; sweep(45, 3); }
   };
+  // read phase: only measure the letters when the pointer is near
   tick.read = () => {
-    box = name.getBoundingClientRect();
-    fs = box.height / 1.72;
+    const box = root.getBoundingClientRect();
     const near = ptr.active && ptr.y > box.top - fs && ptr.y < box.bottom + fs;
     letters.forEach(L => L.r = near ? L.s.getBoundingClientRect() : null);
   };
-  whenVisible(name, tick);
+  whenVisible(root, tick);
+  return { sweep };
+};
+
+(() => {
+  const name = $('.name');
+  const s = shuffleText(name, $$('.name-line', name), ['#def6ee', '#46ffc7', '#ffce1d']);
+  document.fonts.ready.then(() => { if (!PAUSED) setTimeout(() => s.sweep(), 500); });
+  const contact = $('[data-shuffle]');
+  if (contact) {
+    const words = contact.dataset.word.split(' ');
+    contact.dataset.word = '';
+    const groups = words.map(w => { const sp = document.createElement('span'); sp.className = 'sh-word'; sp.setAttribute('aria-hidden', 'true'); sp.dataset.word = w; contact.appendChild(sp); contact.appendChild(document.createTextNode(' ')); return sp; });
+    // on the mint ground: dark inks
+    const cs = shuffleText(contact, groups, ['#071913', '#320007', '#0d2a20']);
+    let done = false;
+    new IntersectionObserver(([e]) => { if (e.isIntersecting && !done && !PAUSED) { done = true; setTimeout(() => cs.sweep(40, 4), 300); } }, { threshold: .6 }).observe(contact);
+  }
 })();
 
 /* ── INDEX BANDS: swell + thicken by cursor distance ─── */
@@ -348,18 +363,27 @@ $$('[data-band]').forEach(el => {
 /* ── SOCIAL: brand rows, animated logos, endless reel rows ─ */
 (() => {
   const host = $('[data-clients]'); if (!host) return;
-  const animMeta = fetch(M + 'logo/anim.json').then(r => r.json()).catch(() => ({}));
+  const animMeta = fetch(M + 'logo/anim.json?v=' + LOGO_V).then(r => r.json()).catch(() => ({}));
+  // focus: the reel under the cursor plays; every other reel pauses, shrinks and fades
+  const focus = { el: null, video: null };
+  const setFocus = (el) => {
+    if (focus.el === el) return;
+    if (focus.el) focus.el.classList.remove('focus');
+    focus.el = el; focus.video = el ? $('video', el) : null;
+    if (el) el.classList.add('focus');
+    host.classList.toggle('focusing', !!el);
+  };
   CLIENTS.forEach((c, ci) => {
     const row = document.createElement('article');
     row.className = 'client';
     row.setAttribute('aria-label', c.name);
-    const list = c.items.map(([k, t, ar]) => ({ k, t: `${c.name} — ${t}`, ar }));
+    // the brand name is the title of every piece
+    const list = c.items.map(([k, , ar]) => ({ k, t: c.name, ar }));
     row.innerHTML = `
       <div class="client-id">
         <button class="logo" type="button" style="--tile:${c.tile}" aria-label="Watch ${c.name} work">
           <span class="logo-in"></span>
         </button>
-        <h3 class="client-name">${c.name}</h3>
       </div>
       <div class="reel" data-cursor="drag"><div class="track"></div></div>`;
     host.appendChild(row);
@@ -368,81 +392,78 @@ $$('[data-band]').forEach(el => {
     marquee($('.reel', row), list, ci % 2 ? 1 : -1);
   });
 
-  // logo: the brand's own logo animation plays when the cursor comes near; the tile tilts toward the cursor
+  // logo: the brand's own logo animation loops for as long as the cursor stays near it
   function logo(tile, c) {
     const inner = $('.logo-in', tile);
-    let play = () => {};
+    let start = () => {}, stop = () => {};
     if (c.anim) {
       const cv = document.createElement('canvas'), g = cv.getContext('2d');
       inner.appendChild(cv);
-      if (c.fit === 'cover') tile.classList.add('cover');
       const img = new Image();
-      let S = null, f = 0, running = false;
+      let S = null, f = 0, running = false, looping = false, t0 = 0;
       const draw = () => {
         if (!S) return;
-        const sx = (f % S.cols) * S.w, sy = Math.floor(f / S.cols) * S.h;
         g.clearRect(0, 0, cv.width, cv.height);
-        if (c.fit === 'cover') {
-          // crop the frame to the tile's shape
-          const ar = cv.width / cv.height, far = S.w / S.h;
-          let cw = S.w, ch = S.h; if (far > ar) cw = ch * ar; else ch = cw / ar;
-          g.drawImage(img, sx + (S.w - cw) / 2, sy + (S.h - ch) / 2, cw, ch, 0, 0, cv.width, cv.height);
-        } else g.drawImage(img, sx, sy, S.w, S.h, 0, 0, cv.width, cv.height);
+        g.drawImage(img, (f % S.cols) * S.w, Math.floor(f / S.cols) * S.h, S.w, S.h, 0, 0, cv.width, cv.height);
       };
+      // size by the FINISHED logo, so every brand looks the same size and sits in the centre
       const size = () => {
         if (!S) return;
         const dpr = Math.min(2, devicePixelRatio || 1);
-        let w, h;
-        if (c.fit === 'cover') { w = tile.clientWidth; h = tile.clientHeight; }
-        else {
-          const tw = tile.clientWidth * .74, th = tile.clientHeight * .7, ar = S.w / S.h;
-          w = Math.min(tw, th * ar); h = w / ar;
-        }
+        const side = tile.clientWidth;
+        const k = Math.min(side * .66 / (S.w * (S.fw || 1)), side * .58 / (S.h * (S.fh || 1)));
+        const w = S.w * k, h = S.h * k;
         cv.style.width = w + 'px'; cv.style.height = h + 'px';
         cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
         draw();
       };
-      Promise.all([animMeta, new Promise(r => { img.onload = r; img.src = M + 'logo/' + c.id + '-anim.webp'; })]).then(([m]) => {
+      Promise.all([animMeta, new Promise(r => { img.onload = r; img.src = M + 'logo/' + c.id + '-anim.webp?v=' + LOGO_V; })]).then(([m]) => {
         S = m[c.id]; if (!S) return;
         f = S.n - 1; size(); addEventListener('resize', size);
-        // play once when the row first comes into view
-        new IntersectionObserver(([e], o) => { if (e.isIntersecting) { play(); o.disconnect(); } }, { threshold: .7 }).observe(tile);
+        new IntersectionObserver(([e], o) => { if (e.isIntersecting) { play(false); o.disconnect(); } }, { threshold: .7 }).observe(tile);
       });
-      let t0 = 0;
-      play = () => { if (!S || running) return; running = true; f = 0; t0 = performance.now(); draw(); };
+      const play = loop => { if (!S) return; looping = loop; if (!running) { running = true; t0 = performance.now(); } };
+      start = () => play(true);
+      stop = () => { looping = false; };  // finishes the current pass, then rests on the full logo
       ticks.add((dt, now) => {
         if (!running) return;
-        // frames follow the clock, so the logo keeps its real speed even on a slow device
-        f = Math.min(S.n - 1, Math.floor((now - t0) / 1000 * S.fps));
-        if (f >= S.n - 1) running = false;
+        const total = S.n + 12;             // a short hold on the finished logo between loops
+        let k = Math.floor((now - t0) / 1000 * S.fps);
+        if (k >= total) { if (looping) { t0 = now; k = 0; } else { running = false; k = S.n - 1; } }
+        f = Math.min(S.n - 1, k);
         draw();
       });
     } else {
       const im = document.createElement('img'); im.src = M + 'logo/' + c.id + '.png'; im.alt = ''; im.draggable = false;
       inner.appendChild(im);
-      play = () => { tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); };
+      let timer = 0;
+      const pop = () => { tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); };
+      start = () => { if (!timer) { pop(); timer = setInterval(pop, 1100); } };
+      stop = () => { clearInterval(timer); timer = 0; };
     }
-    let p = 0, armed = true, rx = 0, ry = 0, r = null, st = '';
+    let p = 0, near = false, rx = 0, ry = 0, r = null, st = '';
     const tick = () => {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      const target = ptr.active ? clamp(1 - Math.hypot(ptr.x - cx, ptr.y - cy) / (r.width * 1.3)) : 0;
-      p = lerp(p, target, .1);
-      if (p > .45 && armed) { armed = false; play(); }
-      if (p < .12) armed = true;
+      const target = ptr.active ? clamp(1 - Math.hypot(ptr.x - cx, ptr.y - cy) / (r.width * 1.8)) : 0;
+      p = lerp(p, target, .12);
+      if (target > .2 && !near) { near = true; start(); }
+      if (target <= .2 && near) { near = false; stop(); }
       const nx = clamp((ptr.x - cx) / r.width, -1, 1), ny = clamp((ptr.y - cy) / r.height, -1, 1);
       rx = lerp(rx, ptr.active ? nx : 0, .1); ry = lerp(ry, ptr.active ? ny : 0, .1);
-      const t = p < .002 ? '' : `perspective(700px) rotateY(${(rx * p * 16).toFixed(2)}deg) rotateX(${(-ry * p * 16).toFixed(2)}deg) scale(${(1 + p * .06).toFixed(4)})`;
+      const t = p < .002 ? '' : `perspective(600px) rotateY(${(rx * p * 16).toFixed(2)}deg) rotateX(${(-ry * p * 16).toFixed(2)}deg) scale(${(1 + p * .08).toFixed(4)})`;
       if (t !== st) { st = t; tile.style.transform = t; }
     };
     tick.read = () => { r = tile.getBoundingClientRect(); };
+    tick.visible = on => { if (!on && near) { near = false; stop(); } };
     if (FINE) whenVisible(tile, tick);
-    else tile.addEventListener('pointerdown', () => play());
+    else tile.addEventListener('pointerdown', () => { start(); setTimeout(stop, 2500); });
   }
 
   // an endless row of the brand's reels, all playing, drifting sideways
   function marquee(reel, list, dir) {
     const track = $('.track', reel);
-    let H = 0, Wc = 0, setW = 0, x = 0, speed = 1, vids = [], offs = [];
+    let H = 0, Wc = 0, setW = 0, x = 0, speed = 1, vids = [], cards = [], offs = [];
+    const playing = new Set();
     const build = () => {
       H = reel.clientHeight; Wc = reel.clientWidth;
       const gap = Math.round(clamp(H * .08, 16, 30));
@@ -453,52 +474,57 @@ $$('[data-band]').forEach(el => {
       track.innerHTML = [...seq, ...seq].map(it => {
         const ix = list.indexOf(it);
         return `<div class="it" style="width:${Math.round(H * it.ar)}px" data-i="${ix}">` +
-          `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4" aria-label="${it.t}"></video></div>`;
+          `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4" aria-hidden="true"></video></div>`;
       }).join('');
-      vids = $$('video', track); offs = [];
-      let o = 0; $$('.it', track).forEach(el => { const wd = parseFloat(el.style.width); offs.push([o, o + wd]); o += wd + gap; });
+      vids = $$('video', track); cards = $$('.it', track); offs = [];
+      let o = 0; cards.forEach(el => { const wd = parseFloat(el.style.width); offs.push([o, o + wd]); o += wd + gap; });
       x = dir < 0 ? 0 : -setW;
       playing.clear();
     };
-    const playing = new Set();
     build();
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 200); });
 
-    let hover = false, drag = null, moved = 0;
+    let hover = false, drag = null, moved = 0, rr = null;
+    const cardAt = clientX => {
+      const rx = clientX - rr.left - x;
+      const hit = offs.findIndex(([a, b]) => rx >= a - 10 && rx <= b + 10);
+      return hit >= 0 ? cards[hit] : null;
+    };
     reel.addEventListener('pointerenter', () => hover = true);
-    reel.addEventListener('pointerleave', () => hover = false);
+    reel.addEventListener('pointerleave', () => { hover = false; if (focus.el && reel.contains(focus.el)) setFocus(null); });
     reel.addEventListener('pointerdown', e => { drag = { x: e.clientX, x0: x }; moved = 0; reel.setPointerCapture(e.pointerId); reel.classList.add('drag'); });
     reel.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x; moved = Math.max(moved, Math.abs(dx)); x = drag.x0 + dx; });
     reel.addEventListener('pointerup', e => {
       if (!drag) return;
       reel.classList.remove('drag');
-      if (moved < 6) {
-        const rx = e.clientX - reel.getBoundingClientRect().left - x;
-        const hit = offs.findIndex(([a, b]) => rx >= a && rx <= b);
-        if (hit >= 0) lb.open(list, +$$('.it', track)[hit].dataset.i);
-      }
+      if (moved < 6) { const el = cardAt(e.clientX); if (el) lb.open(list, +el.dataset.i); }
       drag = null;
     });
     reel.addEventListener('pointercancel', () => { drag = null; reel.classList.remove('drag'); });
     reel.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lb.open(list, 0); } });
     reel.tabIndex = 0; reel.setAttribute('role', 'button');
-    reel.setAttribute('aria-label', `Watch the ${list[0].t.split(' — ')[0]} reels in the player`);
+    reel.setAttribute('aria-label', `Watch the ${list[0].t} reels in the player`);
 
     const tick = dt => {
-      speed = lerp(speed, drag || PAUSED ? 0 : hover ? .2 : 1, .08);
+      // the row stops while you look at one of its reels
+      const focused = focus.el && reel.contains(focus.el);
+      speed = lerp(speed, drag || PAUSED || focused ? 0 : hover ? .2 : 1, .1);
       if (!drag) x += dir * 38 * speed * dt;
       while (x <= -setW) x += setW;
       while (x > 0) x -= setW;
       track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
-      // only the cards on screen play
+      // which card is under the cursor (fine pointers only)
+      if (FINE && hover && !drag && ptr.y >= rr.top && ptr.y <= rr.bottom) setFocus(cardAt(ptr.x));
       const l0 = -x - 40, l1 = -x + Wc + 40;
       offs.forEach(([a, b], i) => {
-        // paused: every card holds still on its poster frame
-        const v = vids[i], on = !PAUSED && b > l0 && a < l1;
+        const v = vids[i];
+        // paused switch: everything holds still. focus: only the focused reel plays
+        const on = !PAUSED && b > l0 && a < l1 && (!focus.video || focus.video === v);
         if (on && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
         else if (!on && playing.has(v)) { v.pause(); playing.delete(v); }
       });
     };
+    tick.read = () => { rr = reel.getBoundingClientRect(); };
     tick.visible = on => { if (!on) { playing.forEach(v => v.pause()); playing.clear(); } };
     whenVisible(reel, tick);
   }
@@ -605,9 +631,17 @@ $$('[data-band]').forEach(el => {
   stage.setAttribute('data-cursor', 'drag');
 
   const playing = new Set();
+  let hot = null;
+  stage.addEventListener('pointermove', e => {
+    if (!FINE || drag) return;
+    const p = e.target.closest('.panel');
+    if (p !== hot) { if (hot) hot.classList.remove('focus'); hot = p; if (p) p.classList.add('focus'); ring.classList.toggle('focusing', !!p); }
+  });
+  stage.addEventListener('pointerleave', () => { if (hot) hot.classList.remove('focus'); hot = null; ring.classList.remove('focusing'); });
   const tick = dt => {
+    if (hot) vel = lerp(vel, 0, .2);
     if (target !== null) { angle = lerp(angle, target + Math.round((angle - target) / 360) * 360, .08); vel = 0; }
-    else if (!drag) { vel = lerp(vel, PAUSED ? 0 : -9, .02); angle += vel * dt; }
+    else if (!drag) { vel = lerp(vel, PAUSED || hot ? 0 : -9, hot ? .2 : .02); angle += vel * dt; }
     const ny = FINE && ptr.active ? clamp((ptr.y - (r.top + r.height / 2)) / r.height, -.5, .5) : 0;
     tilt = lerp(tilt, -6 - ny * 14, .06);
     ring.style.transform = `translateZ(${-R}px) rotateX(${tilt.toFixed(2)}deg) rotateY(${angle.toFixed(2)}deg)`;
@@ -618,7 +652,7 @@ $$('[data-band]').forEach(el => {
       const v = $('video', p);
       if (Math.abs(a) < bestA) { bestA = Math.abs(a); best = +p.dataset.i; }
       if (!v) return;
-      const front = !PAUSED && Math.abs(a) < 75;
+      const front = !PAUSED && Math.abs(a) < 75 && (!hot || hot === p);
       if (front && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
       else if (!front && playing.has(v)) { v.pause(); playing.delete(v); }
     });
