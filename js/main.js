@@ -257,7 +257,7 @@ const shuffleText = (root, groups, inks) => {
     contact.dataset.word = '';
     const groups = words.map(w => { const sp = document.createElement('span'); sp.className = 'sh-word'; sp.setAttribute('aria-hidden', 'true'); sp.dataset.word = w; contact.appendChild(sp); contact.appendChild(document.createTextNode(' ')); return sp; });
     // on the mint ground: dark inks
-    const cs = shuffleText(contact, groups, ['#071913', '#320007', '#0d2a20']);
+    const cs = shuffleText(contact, groups, ['#071913', '#f93462', '#0d2a20']);
     let done = false;
     new IntersectionObserver(([e]) => { if (e.isIntersecting && !done && !PAUSED) { done = true; setTimeout(() => cs.sweep(40, 4), 300); } }, { threshold: .6 }).observe(contact);
   }

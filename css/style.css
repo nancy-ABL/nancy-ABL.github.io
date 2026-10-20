@@ -1,7 +1,7 @@
 /* Nancy Abdelaal — portfolio */
 :root{
   --bg:#071913; --bg-2:#0d2a20; --ink:#def6ee; --ink-2:#a9c9bd;
-  --mint:#46ffc7; --wine:#320007; --sun:#ffce1d;
+  --mint:#46ffc7; --wine:#f93462; --sun:#ffce1d;
   --display:"Fraunces", Georgia, serif;
   --sans:"Bricolage Grotesque", system-ui, sans-serif;
   --gut:clamp(16px,3vw,40px);
@@ -76,7 +76,7 @@ input,textarea{caret-color:var(--mint)}
 .ch>.g{display:inline-block;transition:transform .25s var(--spring);will-change:transform}
 .ch>.g.shape{position:absolute;left:50%;top:50%;width:.74em;height:.74em;margin:-.37em 0 0 -.37em}
 .ch>.g.shape svg{width:100%;height:100%;display:block}
-.ch>.g.chip{background:var(--wine);color:var(--sun);border-radius:.18em;padding:0 .04em}
+.ch>.g.chip{background:var(--wine);color:var(--bg);border-radius:.18em;padding:0 .04em}
 .hero-foot{grid-column:1/-1;grid-row:3;display:grid;grid-template-columns:minmax(0,1.3fr) auto auto;gap:18px 40px;align-items:end;margin-top:28px}
 .hero-bio{font-size:clamp(20px,1.9vw,28px);line-height:1.25;max-width:30ch;font-weight:500}
 .hero-where{display:flex;align-items:center;gap:10px;font-weight:600;white-space:nowrap}
@@ -207,16 +207,16 @@ input,textarea{caret-color:var(--mint)}
 .contact-h{font:800 clamp(44px,7.6vw,150px)/.92 var(--display);font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1;letter-spacing:-.035em}
 .contact-h .sh-word{display:inline-flex;white-space:nowrap}
 .contact-h .ch{height:.9em;line-height:.9}
-.contact-h .g.chip{background:var(--wine);color:var(--sun)}
+.contact-h .g.chip{background:var(--wine);color:var(--bg)}
 .contact-mail{position:relative;display:inline-block;margin-top:clamp(24px,3vw,44px);font:italic 500 clamp(24px,4.4vw,72px)/1.05 var(--display);text-decoration:none;word-break:break-word;transition:transform .4s var(--spring)}
 .contact-mail::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:5px;border-radius:5px;background:var(--bg);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
 .contact-mail:hover::after{transform:scaleX(1)}
 .contact-mail:hover{transform:skewX(-4deg)}
 .contact-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:36px}
 .pill{display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border-radius:99px;background:var(--bg);color:var(--ink);text-decoration:none;font-weight:700;transition:transform .35s var(--spring),background .2s,color .2s}
-.pill:hover{background:var(--wine);color:var(--sun);transform:translateY(-3px) rotate(1.5deg)}
+.pill:hover{background:var(--wine);color:var(--bg);transform:translateY(-3px) rotate(1.5deg)}
 .contact-where{margin-top:36px;font-weight:600;font-size:18px}
-.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:24px var(--gut);background:var(--wine);color:var(--ink);font-size:15px}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:24px var(--gut);background:var(--wine);color:var(--bg);font-size:15px}
 .foot a{font-weight:700;text-decoration:none}
 
 /* ── LIGHTBOX ─────────────────────────── */
