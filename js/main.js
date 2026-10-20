@@ -31,7 +31,7 @@ const CLIENTS = [
   { id: 'bk', name: 'Burger King', tile: '#def6ee', anim: true, items: [
     ['bk-whopper', 'Whopper', F], ['bk-reel', 'Reel', P], ['bk-maze', 'Maze', F],
     ['bk-99', 'Whopper for 99', F], ['bk-eid', 'Eid greeting', P], ['bk-post2', 'Iftar menu', P]] },
-  { id: 'ph', name: 'Pizza Hut', tile: '#def6ee', anim: true, items: [
+  { id: 'ph', name: 'Pizza Hut', sub: 'KSA', tile: '#def6ee', anim: true, items: [
     ['ph-day', 'Animation day', P], ['ph-4', 'Rerouting', P], ['ph-anim7', 'Made with love', P], ['ph-12', '30% off', P],
     ['ph-mybox', 'My box', F], ['ph-17', 'Saudi vs Morocco', P], ['ph-5', 'Half & half', P], ['ph-anim2', '30% in the app', F],
     ['ph-p13', 'Notifications', P], ['ph-4x4', '4×4 deal', .566], ['ph-2', 'Personality', P], ['ph-jump', 'Jump game', .789],
@@ -55,11 +55,11 @@ const TYPO = [
   { k: 'typo-mylo', t: 'Mylo', bg: '#def6ee', fit: 'contain', img: true },
 ];
 const VO = [
+  { k: 'vo-kidzania', t: 'KidZania Cairo', d: 18 },
+  { k: 'vo-wholewheat', t: 'Domty Whole Wheat', d: 20, tall: true },
   { k: 'vo-kelloggs', t: 'Kellogg’s', d: 65 },
   { k: 'vo-cooks', t: 'Cook’s', d: 31 },
-  { k: 'vo-bam', t: 'BAM!', d: 28 },
   { k: 'vo-atyab', t: 'Atyab', d: 28, tall: true },
-  { k: 'vo-wholewheat', t: 'Domty Whole Wheat', d: 20, tall: true },
 ];
 const EDITS = [
   { k: 'edit-handmaid', t: 'The Handmaid’s Tale — unofficial promo', d: 45 },
@@ -67,6 +67,7 @@ const EDITS = [
   { k: 'edit-saudi2030', t: 'Saudi 2030', d: 58, tall: true },
   { k: 'edit-cotton', t: 'Cotton Association', d: 26 },
   { k: 'edit-rawaq', t: 'Rawaq App', d: 15 },
+  { k: 'vo-bam', t: 'BAM!', d: 28 },
 ];
 
 /* ── shared pointer ──────────────────────────────────── */
@@ -292,7 +293,7 @@ const shuffleText = (root, groups, inks) => {
 
 /* ── SECTION BANDS: the title thickens as you come near ─ */
 $$('[data-band]').forEach(el => {
-  let w = 200, sw = 0, r = null, wr = null;
+  let w = 200, sw = 0, o = 0, so = -1, r = null, wr = null;
   const word = $('.sec-word', el);
   const tick = () => {
     let p;
@@ -308,10 +309,24 @@ $$('[data-band]').forEach(el => {
       p = clamp(1 - Math.abs(r.top + r.height / 2 - innerHeight * .4) / (innerHeight * .45));
     }
     w = lerp(w, 140 + p * 760, .12);
+    o = lerp(o, p, .1);
     if (Math.abs(w - sw) >= 1) { sw = w; word.style.setProperty('--w', w.toFixed(0)); }
+    if (Math.abs(o - so) >= .003) { so = o; el.style.setProperty('--o', o.toFixed(3)); }
   };
   tick.read = () => { r = el.getBoundingClientRect(); wr = word.getBoundingClientRect(); };
   whenVisible(el, tick);
+});
+
+/* ── SOCIAL SLOGAN: letters thicken near the cursor ───── */
+$$('[data-slogan-near]').forEach(sl => {
+  const L = splitLetters(sl, 160);
+  const tick = () => L.forEach(l => {
+    const p = .9 * nearness(l, 240);
+    l.w = lerp(l.w, 120 + p * 780, .12);
+    writeLetter(l, p > .6 ? 'var(--mint)' : 'var(--ink)');
+  });
+  tick.read = () => readLetters(sl, L, 260);
+  whenVisible(sl, tick);
 });
 
 /* ── SERVICES: stacked cards ─────────────────────────── */
@@ -383,7 +398,7 @@ $$('[data-band]').forEach(el => {
       <div class="client-id">
         <button class="logo" type="button" style="--tile:${c.tile}" aria-label="Watch ${c.name} work">
           <span class="logo-in"></span>
-        </button>
+        </button>${c.sub ? `<p class="client-sub">${c.sub}</p>` : ''}
       </div>
       <div class="reel" data-cursor="drag"><div class="track"></div></div>`;
     host.appendChild(row);
@@ -578,99 +593,135 @@ $$('[data-band]').forEach(el => {
   whenVisible(sl, tick);
 })();
 
-/* ── TYPO & LOGO: the ring ───────────────────────────── */
+/* ── TYPO & LOGO: square pieces on a big turning wheel, drag to spin it ─ */
 (() => {
-  const stage = $('[data-ring]'), ring = $('[data-ring-inner]'), ul = $('[data-typo-list]');
+  const stage = $('[data-ring]'), wheel = $('[data-ring-inner]'), ul = $('[data-typo-list]');
   if (!stage) return;
-  const items = [...TYPO, ...TYPO]; // ten panels around the ring
-  const N = items.length, step = 360 / N;
-  let R = 0, angle = 0, vel = 0, tilt = 0, target = null;
-  const panels = items.map((it, i) => {
-    const p = document.createElement('div');
-    p.className = 'panel';
-    p.style.setProperty('--pbg', it.bg); if (it.fit) p.style.setProperty('--fit', it.fit);
-    p.innerHTML = (it.img
-      ? `<img src="${M + it.k}.png" alt="${it.t}" loading="lazy">`
-      : `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4" aria-label="${it.t}"></video>`)
-      + `<span class="panel-tag">${it.t}</span>`;
-    p.dataset.i = i % TYPO.length;
-    ring.appendChild(p);
-    return p;
-  });
+  let tiles = [], W = 0, H = 0, S = 0, R = 0, N = 0, step = 0;
+  let angle = 0, vel = 0, target = null, hot = null;
+  const playing = new Set();
+  const build = () => {
+    W = stage.clientWidth; H = stage.clientHeight;
+    S = Math.round(clamp(W * .16, 132, 230));
+    R = Math.max(W * .78, 560);
+    // as many squares as fit round the wheel, in whole sets of the five pieces
+    N = Math.max(TYPO.length * 2, Math.round(2 * Math.PI * R / (S * 1.45) / TYPO.length) * TYPO.length);
+    step = 2 * Math.PI / N;
+    playing.forEach(v => v.pause()); playing.clear();
+    wheel.innerHTML = '';
+    tiles = Array.from({ length: N }, (_, i) => {
+      const it = TYPO[i % TYPO.length];
+      const p = document.createElement('div');
+      p.className = 'panel';
+      p.style.cssText = `--pbg:${it.bg};width:${S}px;height:${S}px;visibility:hidden`;
+      p.innerHTML = it.img
+        ? `<img src="${M + it.k}.png" alt="" draggable="false">`
+        : `<video muted playsinline loop preload="none" poster="${M + it.k}.jpg" data-src="${M + it.k}.mp4" aria-hidden="true"></video>`;
+      p.dataset.i = i % TYPO.length;
+      wheel.appendChild(p);
+      return { p, v: $('video', p), st: '', on: false };
+    });
+  };
   TYPO.forEach((it, i) => {
     const li = document.createElement('li');
     li.innerHTML = `<button type="button">${it.t}</button>`;
-    li.firstChild.onclick = () => { target = -i * step; lb.open(TYPO, i); };
-    li.firstChild.onmouseenter = () => { target = -i * step; };
+    li.firstChild.onclick = () => { spinTo(i); lb.open(TYPO, i); };
+    li.firstChild.onmouseenter = () => spinTo(i);
     ul.appendChild(li);
   });
-  const size = () => {
-    const pw = Math.round(clamp(innerWidth * .19, 150, 270));
-    stage.style.setProperty('--pw', pw + 'px');
-    R = Math.round(pw / 2 / Math.tan(Math.PI / N) + pw * .16);
-    panels.forEach((p, i) => p.style.transform = `rotateY(${i * step}deg) translateZ(${R}px)`);
+  // turn the nearest copy of piece i to the top of the wheel
+  const spinTo = i => {
+    let best = 0, bd = 1e9;
+    for (let k = i; k < N; k += TYPO.length) {
+      const d = Math.atan2(Math.sin(k * step + angle), Math.cos(k * step + angle));
+      if (Math.abs(d) < bd) { bd = Math.abs(d); best = angle - d; }
+    }
+    target = best;
   };
-  size(); addEventListener('resize', size);
+  build();
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 200); });
 
+  // drag: the squares follow your hand round the wheel, then glide on
   let drag = null, moved = 0;
-  stage.addEventListener('pointerdown', e => { drag = { x: e.clientX, a: angle, t: performance.now() }; moved = 0; vel = 0; target = null; stage.setPointerCapture(e.pointerId); stage.classList.add('drag'); });
+  stage.addEventListener('pointerdown', e => {
+    drag = { x: e.clientX, a: angle, lx: e.clientX, lt: performance.now() }; moved = 0; vel = 0; target = null;
+    stage.setPointerCapture(e.pointerId); stage.classList.add('drag');
+  });
   stage.addEventListener('pointermove', e => {
+    // hover: the square under the cursor comes forward, the wheel stops
+    if (FINE && !drag) {
+      const p = e.target.closest('.panel');
+      if (p !== hot) { if (hot) hot.classList.remove('focus'); hot = p; if (p) p.classList.add('focus'); wheel.classList.toggle('focusing', !!p); }
+    }
     if (!drag) return;
     const dx = e.clientX - drag.x; moved = Math.max(moved, Math.abs(dx));
-    const na = drag.a + dx * .35; vel = (na - angle) * 60; angle = na;
+    const now = performance.now();
+    const na = drag.a + dx / R;
+    vel = lerp(vel, (e.clientX - drag.lx) / R / Math.max(.008, (now - drag.lt) / 1000), .5);
+    drag.lx = e.clientX; drag.lt = now;
+    angle = na;
   });
-  stage.addEventListener('pointerup', e => {
+  const end = e => {
+    if (!drag) return;
     stage.classList.remove('drag');
-    if (drag && moved < 6) {
-      stage.releasePointerCapture(e.pointerId);
+    if (moved < 6) {
       const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('.panel');
       if (el) lb.open(TYPO, +el.dataset.i);
+      vel = 0;
     }
     drag = null;
-  });
+  };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+  stage.addEventListener('pointerleave', () => { if (hot) hot.classList.remove('focus'); hot = null; wheel.classList.remove('focusing'); });
   stage.setAttribute('data-cursor', 'drag');
 
-  const playing = new Set();
-  let hot = null;
-  stage.addEventListener('pointermove', e => {
-    if (!FINE || drag) return;
-    const p = e.target.closest('.panel');
-    if (p !== hot) { if (hot) hot.classList.remove('focus'); hot = p; if (p) p.classList.add('focus'); ring.classList.toggle('focusing', !!p); }
-  });
-  stage.addEventListener('pointerleave', () => { if (hot) hot.classList.remove('focus'); hot = null; ring.classList.remove('focusing'); });
+  const CRUISE = -.07; // radians a second, a slow drift to the left
   const tick = dt => {
-    if (hot) vel = lerp(vel, 0, .2);
-    if (target !== null) { angle = lerp(angle, target + Math.round((angle - target) / 360) * 360, .08); vel = 0; }
-    else if (!drag) { vel = lerp(vel, PAUSED || hot ? 0 : -9, hot ? .2 : .02); angle += vel * dt; }
-    const ny = FINE && ptr.active ? clamp((ptr.y - (r.top + r.height / 2)) / r.height, -.5, .5) : 0;
-    tilt = lerp(tilt, -6 - ny * 14, .06);
-    ring.style.transform = `translateZ(${-R}px) rotateX(${tilt.toFixed(2)}deg) rotateY(${angle.toFixed(2)}deg)`;
-    // play the panels that face us
-    let best = null, bestA = 999;
-    panels.forEach((p, i) => {
-      let a = ((i * step + angle) % 360 + 540) % 360 - 180;
-      const v = $('video', p);
-      if (Math.abs(a) < bestA) { bestA = Math.abs(a); best = +p.dataset.i; }
-      if (!v) return;
-      const front = !PAUSED && Math.abs(a) < 75 && (!hot || hot === p);
-      if (front && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
-      else if (!front && playing.has(v)) { v.pause(); playing.delete(v); }
+    if (target !== null) { angle = lerp(angle, target, .09); vel = 0; if (Math.abs(angle - target) < .0005) target = null; }
+    else if (!drag) {
+      vel = lerp(vel, PAUSED || hot ? 0 : CRUISE, hot ? .2 : .03);
+      angle += vel * dt;
+    }
+    // the wheel's centre sits below the stage, so its top arc runs across it
+    const cx = W / 2, cy = S * .95 + R;
+    const reach = Math.asin(clamp((W / 2 + S) / R, 0, 1)) + step;
+    tiles.forEach((t, i) => {
+      const a = Math.atan2(Math.sin(i * step + angle), Math.cos(i * step + angle));
+      const vis = Math.abs(a) < reach;
+      if (vis) {
+        const x = cx + R * Math.sin(a) - S / 2, y = cy - R * Math.cos(a) - S / 2;
+        const tr = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${(a * 180 / Math.PI).toFixed(2)}deg)`;
+        if (tr !== t.st) { t.st = tr; t.p.style.transform = tr; }
+      }
+      if (vis !== t.on) { t.on = vis; t.p.style.visibility = vis ? '' : 'hidden'; }
+      // play what is on screen; while you point at one, only that one
+      const v = t.v; if (!v) return;
+      const go = vis && !PAUSED && (!hot || hot === t.p);
+      if (go && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
+      else if (!go && playing.has(v)) { v.pause(); playing.delete(v); }
     });
+    // light up the piece at the top
+    let best = 0, bd = 9;
+    tiles.forEach((t, i) => { const d = Math.abs(Math.atan2(Math.sin(i * step + angle), Math.cos(i * step + angle))); if (d < bd) { bd = d; best = i % TYPO.length; } });
     $$('button', ul).forEach((b, i) => b.classList.toggle('on', i === best));
   };
-  let r = null;
-  tick.read = () => { r = stage.getBoundingClientRect(); };
   tick.visible = on => { if (!on) { playing.forEach(v => v.pause()); playing.clear(); } };
   whenVisible(stage, tick);
-  // keyboard: arrow keys turn the ring a piece at a time
-  stage.tabIndex = 0; stage.setAttribute('role', 'group'); stage.setAttribute('aria-label', 'Typo and logo pieces. Use the left and right arrow keys to turn the ring.');
+  // keyboard: arrow keys turn the wheel a square at a time
+  stage.tabIndex = 0; stage.setAttribute('role', 'group');
+  stage.setAttribute('aria-label', 'Typo and logo pieces. Use the left and right arrow keys to turn the wheel, Enter to watch the piece at the top.');
   stage.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const top = $$('button', ul).findIndex(b => b.classList.contains('on'));
+      lb.open(TYPO, Math.max(0, top)); return;
+    }
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
     const base = target ?? Math.round(angle / step) * step;
     target = base + (e.key === 'ArrowLeft' ? step : -step);
   });
-  stage.addEventListener('pointerleave', () => { if (target !== null) setTimeout(() => target = null, 1600); });
 })();
 
 /* ── VOICE OVER: the slogan takes its weight from the voice ─ */
@@ -799,7 +850,7 @@ $$('[data-band]').forEach(el => {
 
 /* ── entrances, nav state, clock ─────────────────────── */
 (() => {
-  const groups = ['.hero-foot > *', '.ed-list li', '.ed-stage', '.services-head > *', '.client-id', '.sec-note', '.slogan', '.vo-list li', '.vo-stage', '.contact > *', '.typo-list'];
+  const groups = ['.hero-foot > *', '.ed-list li', '.ed-stage', '.services-head > *', '.client-id', '.slogan', '.typo-hint', '.vo-list li', '.vo-stage', '.contact > *', '.typo-list'];
   groups.forEach(sel => $$(sel).forEach((el, i) => { el.classList.add('rise'); el.style.setProperty('--d', (i % 6) * 75 + 'ms'); }));
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
   $$('.rise').forEach(el => io.observe(el));
