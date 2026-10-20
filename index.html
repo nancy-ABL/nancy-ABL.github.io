@@ -30,22 +30,37 @@
     <a href="#voice">Voice Over</a>
     <a href="#contact">Contact</a>
   </nav>
-  <a class="btn btn-sm" href="mailto:nancyabdelaal21@gmail.com">Email me</a>
+  <div class="top-act">
+    <button class="motion-btn" type="button" data-motion aria-pressed="false" title="Pause or play the moving reels and animations">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/><path class="i-play" d="M8 5v14l11-7z"/></svg>
+      <span>Pause Motion</span>
+    </button>
+    <a class="btn btn-sm" href="mailto:nancyabdelaal21@gmail.com">Email Me</a>
+    <button class="menu-btn" type="button" data-menu aria-expanded="false" aria-controls="mnav">Menu</button>
+  </div>
 </header>
+<nav id="mnav" class="mnav" aria-label="Sections" hidden>
+  <a href="#social" style="--c:var(--mint);--t:var(--bg)">Social Media</a>
+  <a href="#edit" style="--c:var(--sun);--t:var(--bg)">Video Edit</a>
+  <a href="#typo" style="--c:var(--ink);--t:var(--bg)">Typo &amp; Logo Animation</a>
+  <a href="#voice" style="--c:var(--wine);--t:var(--ink)">Voice Over</a>
+  <a href="#contact" style="--c:var(--bg-2);--t:var(--mint)">Contact</a>
+</nav>
 
 <main id="top">
   <!-- HERO ─ the name is the live thing -->
   <section class="hero" aria-labelledby="name">
-    <h1 id="name" class="name" aria-label="Nancy Abdelaal" data-cursor="shuffle">
-      <span class="name-line" data-word="NANCY"></span>
-      <span class="name-line" data-word="ABDELAAL"></span>
+    <h1 id="name" class="name" data-cursor="shuffle">
+      <span class="sr-only">Nancy Abdelaal</span>
+      <span class="name-line" data-word="NANCY" aria-hidden="true"></span>
+      <span class="name-line" data-word="ABDELAAL" aria-hidden="true"></span>
     </h1>
     <div class="hero-foot">
       <p class="hero-bio">Motion designer, video editor and voice-over artist. I make brands move, cut to the beat, and speak.</p>
       <p class="hero-where"><span class="dot" aria-hidden="true"></span>Based in Cairo, Egypt</p>
       <div class="hero-cta">
-        <a class="btn" href="#social">See the work</a>
-        <a class="btn btn-ghost" href="#voice">Hear my voice</a>
+        <a class="btn" href="#social">See the Work</a>
+        <a class="btn btn-ghost" href="#voice">Hear My Voice</a>
       </div>
     </div>
   </section>
@@ -87,7 +102,7 @@
           <h3 class="card-title">Motion design</h3>
           <p class="card-slogan">Movement matches your rhythm</p>
         </div>
-        <a class="card-go" href="#social">See the motion work</a>
+        <a class="card-go" href="#social">See the Motion Work</a>
       </article>
       <article class="card" style="--c:var(--sun)">
         <video muted playsinline loop preload="metadata" poster="media/edit-handmaid.jpg" data-src="media/edit-handmaid.mp4"></video>
@@ -95,7 +110,7 @@
           <h3 class="card-title">Video edit</h3>
           <p class="card-slogan">Cuts match your tempo</p>
         </div>
-        <a class="card-go" href="#edit">Watch the edits</a>
+        <a class="card-go" href="#edit">Watch the Edits</a>
       </article>
       <article class="card" style="--c:var(--ink)">
         <video muted playsinline loop preload="metadata" poster="media/vo-kelloggs.jpg" data-src="media/vo-kelloggs.mp4"></video>
@@ -103,7 +118,7 @@
           <h3 class="card-title">Voice over</h3>
           <p class="card-slogan">A voice you can see</p>
         </div>
-        <a class="card-go" href="#voice">Hear the demos</a>
+        <a class="card-go" href="#voice">Hear the Demos</a>
       </article>
     </div>
     <div class="stack-ctrl">
@@ -127,7 +142,7 @@
     <header class="sec-band" style="--c:var(--sun);--t:var(--bg)" data-band>
       <h2 id="edit-h" class="sec-word">Video Edit</h2>
     </header>
-    <p class="slogan slogan-sm" data-slogan-cursor aria-label="Cuts match your tempo">CUTS MATCH YOUR TEMPO</p>
+    <p class="slogan slogan-sm" data-slogan-cursor>CUTS MATCH YOUR TEMPO</p>
     <div class="ed">
       <div class="ed-stage">
         <div class="ed-frame" data-ed-frame>
@@ -156,7 +171,7 @@
     <header class="sec-band" style="--c:var(--wine);--t:var(--ink)" data-band>
       <h2 id="voice-h" class="sec-word">Voice Over</h2>
     </header>
-    <p class="slogan" data-slogan aria-label="A voice you can see">A VOICE YOU CAN SEE</p>
+    <p class="slogan" data-slogan>A VOICE YOU CAN SEE</p>
     <div class="vo">
       <ol class="vo-list" data-vo-list></ol>
       <div class="vo-stage">
@@ -166,7 +181,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
           </button>
         </div>
-        <p class="vo-now"><span data-vo-title>Kellogg's</span> <span class="vo-time" data-vo-time>0:00</span></p>
+        <p class="vo-now"><span data-vo-title>Kellogg’s</span> <span class="vo-time" data-vo-time>0:00</span></p>
         <p class="vo-tip">Press play and watch the slogan above: every letter takes its weight from my voice.</p>
       </div>
     </div>
@@ -187,7 +202,7 @@
 
 <footer class="foot">
   <p>© <span data-year>2026</span> Nancy Abdelaal. All work shown was made for the brands named.</p>
-  <a href="#top">Back to top ↑</a>
+  <a href="#top">Back to Top ↑</a>
 </footer>
 
 <dialog class="lb" data-lb aria-label="Video player">

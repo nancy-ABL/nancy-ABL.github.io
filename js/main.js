@@ -10,6 +10,17 @@ const pick = a => a[(Math.random() * a.length) | 0];
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const M = 'media/';
+// motion on/off: starts off for reduced-motion users, remembered per visitor
+let PAUSED = REDUCED;
+try { const s = localStorage.getItem('nancy-motion'); if (s) PAUSED = s === 'off'; } catch (e) {}
+const motionSubs = new Set();
+const setPaused = v => {
+  PAUSED = v;
+  try { localStorage.setItem('nancy-motion', v ? 'off' : 'on'); } catch (e) {}
+  document.documentElement.classList.toggle('still', v);
+  motionSubs.forEach(f => f(v));
+};
+document.documentElement.classList.toggle('still', PAUSED);
 
 /* ── content ─────────────────────────────────────────── */
 // ar = width / height of the video
@@ -43,8 +54,8 @@ const TYPO = [
   { k: 'typo-mylo', t: 'Mylo', bg: '#def6ee', fit: 'contain', img: true },
 ];
 const VO = [
-  { k: 'vo-kelloggs', t: "Kellogg's", d: 65 },
-  { k: 'vo-cooks', t: "Cook's", d: 31 },
+  { k: 'vo-kelloggs', t: 'Kellogg’s', d: 65 },
+  { k: 'vo-cooks', t: 'Cook’s', d: 31 },
   { k: 'vo-bam', t: 'BAM!', d: 28 },
   { k: 'vo-atyab', t: 'Atyab', d: 28, tall: true },
   { k: 'vo-wholewheat', t: 'Domty Whole Wheat', d: 20, tall: true },
@@ -70,6 +81,7 @@ const ticks = new Set();
 let last = performance.now();
 const loop = now => {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  ticks.forEach(f => f.read && f.read());
   ticks.forEach(f => f(dt, now));
   requestAnimationFrame(loop);
 };
@@ -83,6 +95,33 @@ const whenVisible = (el, fn, margin = '100px') => {
     on ? ticks.add(fn) : ticks.delete(fn);
     fn.visible && fn.visible(on);
   }, { rootMargin: margin }).observe(el);
+};
+
+/* ── letters that react (slogans) ─────────────────────── */
+const splitLetters = (el, w0) => {
+  const text = el.textContent.trim();
+  el.textContent = '';
+  const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = text;
+  el.appendChild(sr);
+  const L = [];
+  text.split(' ').forEach(w => {
+    const wd = document.createElement('span'); wd.className = 'wd'; wd.setAttribute('aria-hidden', 'true');
+    [...w].forEach(c => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = c; wd.appendChild(s); L.push({ s, w: w0, y: 0, sw: -1, sy: -1, sc: '', r: null }); });
+    el.appendChild(wd);
+  });
+  return L;
+};
+// measure letters only when the cursor is close enough to matter
+const readLetters = (el, L, reach) => {
+  const b = el.getBoundingClientRect();
+  const near = FINE && ptr.active && ptr.y > b.top - reach && ptr.y < b.bottom + reach;
+  L.forEach(l => l.r = near ? l.s.getBoundingClientRect() : null);
+};
+const nearness = (l, reach) => l.r ? clamp(1 - Math.hypot(ptr.x - (l.r.left + l.r.width / 2), ptr.y - (l.r.top + l.r.height / 2)) / reach) : 0;
+const writeLetter = (l, colour) => {
+  if (Math.abs(l.w - l.sw) >= 1) { l.sw = l.w; l.s.style.setProperty('--w', l.w.toFixed(0)); }
+  if (Math.abs(l.y - l.sy) >= .2) { l.sy = l.y; l.s.style.setProperty('--y', l.y.toFixed(1) + 'px'); }
+  if (colour !== l.sc) { l.sc = colour; l.s.style.setProperty('--lc', colour); }
 };
 
 /* ── lightbox ────────────────────────────────────────── */
@@ -104,6 +143,9 @@ const lb = (() => {
   dlg.addEventListener('click', e => { if (e.target === dlg || e.target.classList.contains('lb-in')) dlg.close(); });
   dlg.addEventListener('close', () => { vid.pause(); vid.removeAttribute('src'); vid.load(); });
   dlg.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
+  let sx = null;
+  dlg.addEventListener('touchstart', e => sx = e.touches[0].clientX, { passive: true });
+  dlg.addEventListener('touchend', e => { if (sx !== null && list.length > 1) { const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1); } sx = null; });
   return { open(l, at = 0) { list = l; i = at; dlg.showModal(); show(); } };
 })();
 
@@ -173,19 +215,18 @@ const lb = (() => {
   });
   document.fonts.ready.then(() => {
     lock();
-    if (!REDUCED) setTimeout(() => sweep(), 500);
+    if (!PAUSED) setTimeout(() => sweep(), 500);
   });
   addEventListener('resize', () => { letters.forEach(reset); lock(); });
   name.addEventListener('touchstart', () => sweep(30, 4), { passive: true });
 
-  let idle = 0;
+  let idle = 0, box = null, fs = 100;
   const tick = (dt, now) => {
-    const fs = parseFloat(getComputedStyle(name).fontSize);
     const R = fs * .85;
     let anyHot = false;
     for (const L of letters) {
-      const b = L.s.getBoundingClientRect();
-      const d = Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2));
+      const b = L.r;
+      const d = b ? Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2)) : 1e9;
       const hot = d < R;
       if (hot) {
         anyHot = true;
@@ -195,7 +236,13 @@ const lb = (() => {
     }
     // nobody near for a while: a small sweep to show it is alive
     idle = anyHot ? 0 : idle + dt;
-    if (!REDUCED && idle > 9) { idle = 0; sweep(45, 3); }
+    if (!PAUSED && idle > 9) { idle = 0; sweep(45, 3); }
+  };
+  tick.read = () => {
+    box = name.getBoundingClientRect();
+    fs = box.height / 1.72;
+    const near = ptr.active && ptr.y > box.top - fs && ptr.y < box.bottom + fs;
+    letters.forEach(L => L.r = near ? L.s.getBoundingClientRect() : null);
   };
   whenVisible(name, tick);
 })();
@@ -203,41 +250,42 @@ const lb = (() => {
 /* ── INDEX BANDS: swell + thicken by cursor distance ─── */
 (() => {
   const box = $('[data-bands]'); if (!box) return;
-  const bands = $$('.band', box).map(el => ({ el, w: 300, g: 1 }));
+  const bands = $$('.band', box).map(el => ({ el, word: $('.band-word', el), w: 300, g: 1, sw: 0, sg: 0, c: 0 }));
+  const touch = !FINE;
+  let r = null;
   const tick = () => {
-    const r = box.getBoundingClientRect();
-    const touch = !FINE;
     // fine pointer: the cursor. touch: the middle of the screen while scrolling through
     const inside = ptr.active && ptr.x >= r.left && ptr.x <= r.right && ptr.y >= r.top && ptr.y <= r.bottom;
     const y = touch ? innerHeight * .5 : ptr.y;
+    const base = r.height / bands.length;
     for (const b of bands) {
-      const br = b.el.getBoundingClientRect();
-      const base = r.height / bands.length;
-      const d = Math.abs(y - (br.top + br.height / 2)) / base;
-      const on = touch || inside;
-      const p = on ? Math.pow(clamp(1 - d / 1.5), 1.6) : 0;
+      const d = Math.abs(y - b.c) / base;
+      const p = touch || inside ? Math.pow(clamp(1 - d / 1.5), 1.6) : 0;
       b.w = lerp(b.w, 160 + p * 740, .14);
       b.g = lerp(b.g, 1 + p * 2.2, .12);
-      b.el.style.setProperty('--w', b.w.toFixed(0));
-      if (!touch) b.el.style.setProperty('--g', b.g.toFixed(3));
+      // write only what changed
+      if (Math.abs(b.w - b.sw) >= 1) { b.sw = b.w; b.word.style.setProperty('--w', b.w.toFixed(0)); }
+      if (!touch && Math.abs(b.g - b.sg) >= .004) { b.sg = b.g; b.el.style.flexGrow = b.g.toFixed(3); }
     }
+  };
+  tick.read = () => {
+    r = box.getBoundingClientRect();
+    bands.forEach(b => { b.c = r.top + b.el.offsetTop + b.el.offsetHeight / 2; });
   };
   whenVisible(box, tick);
 })();
 
 /* ── SECTION BANDS: the title thickens as you come near ─ */
 $$('[data-band]').forEach(el => {
-  let w = 200;
+  let w = 200, sw = 0, r = null, wr = null;
   const word = $('.sec-word', el);
   const tick = () => {
-    const r = el.getBoundingClientRect();
     let p;
     if (FINE) {
       const dx = Math.max(r.left - ptr.x, 0, ptr.x - r.right), dy = Math.max(r.top - ptr.y, 0, ptr.y - r.bottom);
       p = ptr.active ? clamp(1 - Math.hypot(dx, dy) / 340) : 0;
       // inside the band: weight follows how close you are to the word
       if (p === 1) {
-        const wr = word.getBoundingClientRect();
         const dw = Math.hypot(Math.max(wr.left - ptr.x, 0, ptr.x - wr.right), Math.max(wr.top - ptr.y, 0, ptr.y - wr.bottom));
         p = .55 + .45 * clamp(1 - dw / 260);
       }
@@ -245,8 +293,9 @@ $$('[data-band]').forEach(el => {
       p = clamp(1 - Math.abs(r.top + r.height / 2 - innerHeight * .4) / (innerHeight * .45));
     }
     w = lerp(w, 140 + p * 760, .12);
-    el.style.setProperty('--w', w.toFixed(0));
+    if (Math.abs(w - sw) >= 1) { sw = w; word.style.setProperty('--w', w.toFixed(0)); }
   };
+  tick.read = () => { r = el.getBoundingClientRect(); wr = word.getBoundingClientRect(); };
   whenVisible(el, tick);
 });
 
@@ -261,19 +310,20 @@ $$('[data-band]').forEach(el => {
       const v = $('video', c);
       if (k === 0) {
         c.style.transform = 'translateX(0) scale(1) rotate(0)'; c.style.zIndex = 3; c.dataset.pos = 'front';
-        c.removeAttribute('aria-hidden'); c.inert = false;
-        if (seen) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); }
+        c.removeAttribute('aria-hidden'); $('.card-go', c).tabIndex = 0;
+        if (seen && !PAUSED) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); }
       } else {
         const s = k === 1 ? 1 : -1;
         c.style.transform = `translateX(${s * 62}%) scale(.8) rotate(${s * 5}deg)`; c.style.zIndex = k === 1 ? 2 : 1; c.dataset.pos = 'side';
-        c.setAttribute('aria-hidden', 'true'); c.inert = true;
+        c.setAttribute('aria-hidden', 'true'); $('.card-go', c).tabIndex = -1;
         v.pause();
       }
     });
     num.textContent = a + 1;
   };
   const go = d => { a = (a + d + n) % n; place(); restart(); };
-  const restart = () => { clearInterval(timer); if (!REDUCED) timer = setInterval(() => { if (!hover && seen) go(1); }, 5200); };
+  const restart = () => { clearInterval(timer); timer = setInterval(() => { if (!hover && seen && !PAUSED) go(1); }, 5200); };
+  motionSubs.add(p => { const v = $('video', cards[a]); if (p) v.pause(); else if (seen) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); } });
   $('[data-stack-next]').onclick = () => go(1);
   $('[data-stack-prev]').onclick = () => go(-1);
   cards.forEach((c, i) => c.addEventListener('click', e => {
@@ -289,8 +339,9 @@ $$('[data-band]').forEach(el => {
   new IntersectionObserver(([e]) => {
     seen = e.isIntersecting;
     const v = $('video', cards[a]);
-    if (seen) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); } else v.pause();
+    if (seen && !PAUSED) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); } else v.pause();
   }, { threshold: .3 }).observe(box);
+  box.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
   place(); restart();
 })();
 
@@ -371,9 +422,8 @@ $$('[data-band]').forEach(el => {
       inner.appendChild(im);
       play = () => { tile.classList.remove('pop'); void tile.offsetWidth; tile.classList.add('pop'); };
     }
-    let p = 0, armed = true, rx = 0, ry = 0;
+    let p = 0, armed = true, rx = 0, ry = 0, r = null, st = '';
     const tick = () => {
-      const r = tile.getBoundingClientRect();
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const target = ptr.active ? clamp(1 - Math.hypot(ptr.x - cx, ptr.y - cy) / (r.width * 1.3)) : 0;
       p = lerp(p, target, .1);
@@ -381,8 +431,10 @@ $$('[data-band]').forEach(el => {
       if (p < .12) armed = true;
       const nx = clamp((ptr.x - cx) / r.width, -1, 1), ny = clamp((ptr.y - cy) / r.height, -1, 1);
       rx = lerp(rx, ptr.active ? nx : 0, .1); ry = lerp(ry, ptr.active ? ny : 0, .1);
-      tile.style.transform = `perspective(700px) rotateY(${rx * p * 16}deg) rotateX(${-ry * p * 16}deg) scale(${1 + p * .06})`;
+      const t = p < .002 ? '' : `perspective(700px) rotateY(${(rx * p * 16).toFixed(2)}deg) rotateX(${(-ry * p * 16).toFixed(2)}deg) scale(${(1 + p * .06).toFixed(4)})`;
+      if (t !== st) { st = t; tile.style.transform = t; }
     };
+    tick.read = () => { r = tile.getBoundingClientRect(); };
     if (FINE) whenVisible(tile, tick);
     else tile.addEventListener('pointerdown', () => play());
   }
@@ -428,11 +480,12 @@ $$('[data-band]').forEach(el => {
       drag = null;
     });
     reel.addEventListener('pointercancel', () => { drag = null; reel.classList.remove('drag'); });
-    reel.addEventListener('keydown', e => { if (e.key === 'Enter') lb.open(list, 0); });
-    reel.tabIndex = 0; reel.setAttribute('role', 'button'); reel.setAttribute('aria-label', 'Open the reels in the player');
+    reel.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lb.open(list, 0); } });
+    reel.tabIndex = 0; reel.setAttribute('role', 'button');
+    reel.setAttribute('aria-label', `Watch the ${list[0].t.split(' — ')[0]} reels in the player`);
 
     const tick = dt => {
-      speed = lerp(speed, drag || REDUCED ? 0 : hover ? .2 : 1, .08);
+      speed = lerp(speed, drag || PAUSED ? 0 : hover ? .2 : 1, .08);
       if (!drag) x += dir * 38 * speed * dt;
       while (x <= -setW) x += setW;
       while (x > 0) x -= setW;
@@ -440,7 +493,8 @@ $$('[data-band]').forEach(el => {
       // only the cards on screen play
       const l0 = -x - 40, l1 = -x + Wc + 40;
       offs.forEach(([a, b], i) => {
-        const v = vids[i], on = b > l0 && a < l1;
+        // paused: every card holds still on its poster frame
+        const v = vids[i], on = !PAUSED && b > l0 && a < l1;
         if (on && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
         else if (!on && playing.has(v)) { v.pause(); playing.delete(v); }
       });
@@ -480,30 +534,21 @@ $$('[data-band]').forEach(el => {
 
   // the slogan: letters thicken near the cursor, and a cut runs across it on the beat while an edit plays
   const sl = $('[data-slogan-cursor]');
-  const L = [];
-  const words = sl.textContent.trim().split(' '); sl.textContent = '';
-  words.forEach(w => {
-    const wd = document.createElement('span'); wd.className = 'wd'; wd.setAttribute('aria-hidden', 'true');
-    [...w].forEach(ch => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = ch; wd.appendChild(s); L.push({ s, w: 160 }); });
-    sl.appendChild(wd);
-  });
+  const L = splitLetters(sl, 160);
   const tick = (dt, now) => {
     const live = !vid.paused && !vid.ended;
     const beat = (now / 1000) * 2; // 120 bpm
     L.forEach((l, i) => {
       let p = 0;
-      if (live && !REDUCED) {
+      if (live && !PAUSED) {
         const ph = ((beat - i / L.length) % 1 + 1) % 1;
         p = Math.max(0, 1 - ph * 4);
-      } else if (FINE && ptr.active) {
-        const b = l.s.getBoundingClientRect();
-        p = .85 * clamp(1 - Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2)) / 240);
-      }
+      } else p = .85 * nearness(l, 240);
       l.w = lerp(l.w, 120 + p * 780, live ? .4 : .12);
-      l.s.style.setProperty('--w', l.w.toFixed(0));
-      l.s.style.setProperty('--lc', p > .6 ? 'var(--sun)' : 'var(--ink)');
+      writeLetter(l, p > .6 ? 'var(--sun)' : 'var(--ink)');
     });
   };
+  tick.read = () => readLetters(sl, L, 260);
   whenVisible(sl, tick);
 })();
 
@@ -562,8 +607,7 @@ $$('[data-band]').forEach(el => {
   const playing = new Set();
   const tick = dt => {
     if (target !== null) { angle = lerp(angle, target + Math.round((angle - target) / 360) * 360, .08); vel = 0; }
-    else if (!drag) { vel = lerp(vel, REDUCED ? 0 : -9, .02); angle += vel * dt; }
-    const r = stage.getBoundingClientRect();
+    else if (!drag) { vel = lerp(vel, PAUSED ? 0 : -9, .02); angle += vel * dt; }
     const ny = FINE && ptr.active ? clamp((ptr.y - (r.top + r.height / 2)) / r.height, -.5, .5) : 0;
     tilt = lerp(tilt, -6 - ny * 14, .06);
     ring.style.transform = `translateZ(${-R}px) rotateX(${tilt.toFixed(2)}deg) rotateY(${angle.toFixed(2)}deg)`;
@@ -574,14 +618,24 @@ $$('[data-band]').forEach(el => {
       const v = $('video', p);
       if (Math.abs(a) < bestA) { bestA = Math.abs(a); best = +p.dataset.i; }
       if (!v) return;
-      const front = Math.abs(a) < 75;
+      const front = !PAUSED && Math.abs(a) < 75;
       if (front && !playing.has(v)) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); playing.add(v); }
       else if (!front && playing.has(v)) { v.pause(); playing.delete(v); }
     });
     $$('button', ul).forEach((b, i) => b.classList.toggle('on', i === best));
   };
+  let r = null;
+  tick.read = () => { r = stage.getBoundingClientRect(); };
   tick.visible = on => { if (!on) { playing.forEach(v => v.pause()); playing.clear(); } };
   whenVisible(stage, tick);
+  // keyboard: arrow keys turn the ring a piece at a time
+  stage.tabIndex = 0; stage.setAttribute('role', 'group'); stage.setAttribute('aria-label', 'Typo and logo pieces. Use the left and right arrow keys to turn the ring.');
+  stage.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const base = target ?? Math.round(angle / step) * step;
+    target = base + (e.key === 'ArrowLeft' ? step : -step);
+  });
   stage.addEventListener('pointerleave', () => { if (target !== null) setTimeout(() => target = null, 1600); });
 })();
 
@@ -590,15 +644,7 @@ $$('[data-band]').forEach(el => {
   const sl = $('[data-slogan]'), list = $('[data-vo-list]'), frame = $('[data-vo-frame]');
   const vid = $('[data-vo-video]'), playBtn = $('[data-vo-play]'), tEl = $('[data-vo-title]'), timeEl = $('[data-vo-time]');
   if (!sl) return;
-  // split slogan into words → letters
-  const words = sl.textContent.trim().split(' ');
-  sl.textContent = '';
-  const L = [];
-  words.forEach(w => {
-    const wd = document.createElement('span'); wd.className = 'wd'; wd.setAttribute('aria-hidden', 'true');
-    [...w].forEach(c => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = c; wd.appendChild(s); L.push({ s, w: 200, y: 0 }); });
-    sl.appendChild(wd);
-  });
+  const L = splitLetters(sl, 200);
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   let cur = 0;
   VO.forEach((it, i) => {
@@ -666,20 +712,38 @@ $$('[data-band]').forEach(el => {
     }
     L.forEach((l, i) => {
       let p;
-      if (amps) p = amps[i];
-      else if (FINE && ptr.active) {
-        const b = l.s.getBoundingClientRect();
-        p = .8 * clamp(1 - Math.hypot(ptr.x - (b.left + b.width / 2), ptr.y - (b.top + b.height / 2)) / 260);
-      } else p = 0;
+      p = amps ? amps[i] : .8 * nearness(l, 260);
       l.w = lerp(l.w, 120 + p * 780, amps ? .35 : .12);
-      l.y = lerp(l.y, amps && !REDUCED ? -p * 10 : 0, .3);
-      l.s.style.setProperty('--w', l.w.toFixed(0));
-      l.s.style.setProperty('--y', l.y.toFixed(1) + 'px');
-      l.s.style.setProperty('--lc', p > .62 ? 'var(--mint)' : 'var(--ink)');
+      l.y = lerp(l.y, amps && !PAUSED ? -p * 10 : 0, .3);
+      writeLetter(l, p > .62 ? 'var(--mint)' : 'var(--ink)');
     });
   };
+  tick.read = () => readLetters(sl, L, 280);
   whenVisible($('#voice'), tick);
   new IntersectionObserver(([e]) => { if (!e.isIntersecting) vid.pause(); }).observe(frame);
+})();
+
+/* ── pause-motion switch ─────────────────────────────── */
+(() => {
+  const btn = $('[data-motion]'); if (!btn) return;
+  const show = p => { btn.setAttribute('aria-pressed', String(p)); $('span', btn).textContent = p ? 'Play Motion' : 'Pause Motion'; };
+  show(PAUSED);
+  btn.addEventListener('click', () => { setPaused(!PAUSED); show(PAUSED); });
+})();
+
+/* ── phone menu ──────────────────────────────────────── */
+(() => {
+  const btn = $('[data-menu]'), nav = $('#mnav'); if (!btn || !nav) return;
+  const set = open => {
+    btn.setAttribute('aria-expanded', String(open));
+    btn.firstChild.textContent = open ? 'Close' : 'Menu';
+    nav.hidden = !open;
+    document.documentElement.classList.toggle('menu-open', open);
+    if (open) $('a', nav).focus();
+  };
+  btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
+  $$('a', nav).forEach(a => a.addEventListener('click', () => set(false)));
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !nav.hidden) { set(false); btn.focus(); } });
 })();
 
 /* ── cursor follower with labels ─────────────────────── */
