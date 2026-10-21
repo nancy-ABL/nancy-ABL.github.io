@@ -28,23 +28,23 @@ document.documentElement.classList.toggle('still', PAUSED);
 const P = 9 / 16, F = 4 / 5;
 // anim: the brand's animated logo as a sprite sheet (media/logo/<id>-anim.webp); fit 'cover' fills the tile
 const CLIENTS = [
-  { id: 'bk', name: 'Burger King', tile: '#def6ee', anim: true, items: [
+  { id: 'bk', name: 'Burger King', tile: '#ffffff', anim: true, items: [
     ['bk-whopper', 'Whopper', F], ['bk-reel', 'Reel', P], ['bk-maze', 'Maze', F],
     ['bk-99', 'Whopper for 99', F], ['bk-eid', 'Eid greeting', P], ['bk-post2', 'Iftar menu', P]] },
-  { id: 'ph', name: 'Pizza Hut', sub: 'KSA', tile: '#def6ee', anim: true, items: [
+  { id: 'ph', name: 'Pizza Hut', sub: 'KSA', tile: '#ffffff', anim: true, items: [
     ['ph-day', 'Animation day', P], ['ph-4', 'Rerouting', P], ['ph-anim7', 'Made with love', P], ['ph-12', '30% off', P],
     ['ph-mybox', 'My box', F], ['ph-17', 'Saudi vs Morocco', P], ['ph-5', 'Half & half', P], ['ph-anim2', '30% in the app', F],
     ['ph-p13', 'Notifications', P], ['ph-4x4', '4×4 deal', .566], ['ph-2', 'Personality', P], ['ph-jump', 'Jump game', .789],
     ['ph-26', 'The body', P], ['ph-post7', 'Varieties', P], ['ph-ksa-iraq', 'Saudi vs Iraq', P]] },
-  { id: 'domty', name: 'Domty', tile: '#def6ee', anim: true, items: [
+  { id: 'domty', name: 'Domty', tile: '#ffffff', anim: true, items: [
     ['domty-anim', 'Toast animation', P], ['domty-1', 'Pool day', F], ['domty-candy', 'Candy crush', F], ['domty-story', 'Story', P]] },
   { id: 'larch', name: 'Larch', tile: '#3d2a73', anim: true, fit: 'cover', items: [
     ['larch-kv', 'Key visual', 2.15], ['larch-1', 'Post 1', P], ['larch-1b', 'Playground', P], ['larch-2', 'Post 2', P],
     ['larch-3', 'Croissant', P], ['larch-4', 'Summer', P], ['larch-11', 'Mini', P], ['larch-3b', 'Chocolate', P]] },
-  { id: 'lindo', name: 'Lindo', tile: '#def6ee', anim: true, items: [
+  { id: 'lindo', name: 'Lindo', tile: '#ffffff', anim: true, items: [
     ['lindo-anim1', 'Animation 1', P], ['lindo-anim2', 'Animation 2', P], ['lindo-02', 'Laundry', P],
     ['lindo-dish', 'Dish wash', P], ['lindo-post2', 'Post 2', P]] },
-  { id: 'brika', name: 'Brika', tile: '#def6ee', items: [
+  { id: 'brika', name: 'Brika', tile: '#ffffff', items: [
     ['brika-1', 'Post 1', P], ['brika-2', 'Post 2', P], ['brika-3', 'Post 3', P]] },
 ];
 const TYPO = [
@@ -249,15 +249,15 @@ const shuffleText = (root, groups, inks) => {
 
 (() => {
   const name = $('.name');
-  const s = shuffleText(name, $$('.name-line', name), ['#def6ee', '#46ffc7', '#ffce1d']);
+  const s = shuffleText(name, $$('.name-line', name), ['#0a0a0a', '#ff6b1b', '#81b7fb']);
   document.fonts.ready.then(() => { if (!PAUSED) setTimeout(() => s.sweep(), 500); });
   const contact = $('[data-shuffle]');
   if (contact) {
     const words = contact.dataset.word.split(' ');
     contact.dataset.word = '';
     const groups = words.map(w => { const sp = document.createElement('span'); sp.className = 'sh-word'; sp.setAttribute('aria-hidden', 'true'); sp.dataset.word = w; contact.appendChild(sp); contact.appendChild(document.createTextNode(' ')); return sp; });
-    // on the mint ground: dark inks
-    const cs = shuffleText(contact, groups, ['#071913', '#f93462', '#0d2a20']);
+    // on the ink ground: bright inks
+    const cs = shuffleText(contact, groups, ['#fedb08', '#ff6b1b', '#81b7fb']);
     let done = false;
     new IntersectionObserver(([e]) => { if (e.isIntersecting && !done && !PAUSED) { done = true; setTimeout(() => cs.sweep(40, 4), 300); } }, { threshold: .6 }).observe(contact);
   }
@@ -278,7 +278,7 @@ const shuffleText = (root, groups, inks) => {
       const d = Math.abs(y - b.c) / base;
       const p = touch || inside ? Math.pow(clamp(1 - d / 1.5), 1.6) : 0;
       b.w = lerp(b.w, 160 + p * 740, .14);
-      b.g = lerp(b.g, 1 + p * 2.2, .12);
+      b.g = lerp(b.g, 1 + p * 3, .12);
       // write only what changed
       if (Math.abs(b.w - b.sw) >= 1) { b.sw = b.w; b.word.style.setProperty('--w', b.w.toFixed(0)); }
       if (!touch && Math.abs(b.g - b.sg) >= .004) { b.sg = b.g; b.el.style.flexGrow = b.g.toFixed(3); }
@@ -323,7 +323,7 @@ $$('[data-slogan-near]').forEach(sl => {
   const tick = () => L.forEach(l => {
     const p = .9 * nearness(l, 240);
     l.w = lerp(l.w, 120 + p * 780, .12);
-    writeLetter(l, p > .6 ? 'var(--mint)' : 'var(--ink)');
+    writeLetter(l, p > .6 ? 'var(--orange)' : 'var(--ink)');
   });
   tick.read = () => readLetters(sl, L, 260);
   whenVisible(sl, tick);
@@ -586,7 +586,7 @@ $$('[data-slogan-near]').forEach(sl => {
         p = Math.max(0, 1 - ph * 4);
       } else p = .85 * nearness(l, 240);
       l.w = lerp(l.w, 120 + p * 780, live ? .4 : .12);
-      writeLetter(l, p > .6 ? 'var(--sun)' : 'var(--ink)');
+      writeLetter(l, p > .6 ? 'var(--orange)' : 'var(--ink)');
     });
   };
   tick.read = () => readLetters(sl, L, 260);
@@ -800,7 +800,7 @@ $$('[data-slogan-near]').forEach(sl => {
       p = amps ? amps[i] : .8 * nearness(l, 260);
       l.w = lerp(l.w, 120 + p * 780, amps ? .35 : .12);
       l.y = lerp(l.y, amps && !PAUSED ? -p * 10 : 0, .3);
-      writeLetter(l, p > .62 ? 'var(--mint)' : 'var(--ink)');
+      writeLetter(l, p > .62 ? 'var(--orange)' : 'var(--ink)');
     });
   };
   tick.read = () => readLetters(sl, L, 280);
