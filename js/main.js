@@ -10,7 +10,7 @@ const pick = a => a[(Math.random() * a.length) | 0];
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const M = 'media/';
-const LOGO_V = '3'; // bump when the logo sprites change, so browsers fetch the new ones
+const LOGO_V = '4'; // bump when the logo sprites change, so browsers fetch the new ones
 // motion on/off: starts off for reduced-motion users, remembered per visitor
 let PAUSED = REDUCED;
 try { const s = localStorage.getItem('nancy-motion'); if (s) PAUSED = s === 'off'; } catch (e) {}
@@ -28,14 +28,18 @@ document.documentElement.classList.toggle('still', PAUSED);
 const P = 9 / 16, F = 4 / 5;
 // anim: the brand's animated logo as a sprite sheet (media/logo/<id>-anim.webp); fit 'cover' fills the tile
 const CLIENTS = [
-  { id: 'bk', name: 'Burger King', tile: '#ffffff', anim: true, items: [
-    ['bk-whopper', 'Whopper', F], ['bk-reel', 'Reel', P], ['bk-maze', 'Maze', F],
-    ['bk-99', 'Whopper for 99', F], ['bk-eid', 'Eid greeting', P], ['bk-post2', 'Iftar menu', P]] },
+  { id: 'raha', name: 'Raha', sub: 'KSA', tile: '#ffffff', anim: true, items: [
+    ['raha-home', 'Home management', P], ['raha-pink', 'Pink October', 16 / 9], ['raha-late', 'Late shift', .75],
+    ['raha-school', 'Back to school', P], ['raha-reel6', 'Reel 6', F], ['raha-1', 'Invest', .789], ['raha-post0', 'Post', P],
+    ['raha-tiktok', 'TikTok', P], ['raha-cook', 'Cook & fridge', P], ['raha-2', 'Post 2', .566], ['raha-tt', 'TikTok 2', P]] },
   { id: 'ph', name: 'Pizza Hut', sub: 'KSA', tile: '#ffffff', anim: true, items: [
     ['ph-day', 'Animation day', P], ['ph-4', 'Rerouting', P], ['ph-anim7', 'Made with love', P], ['ph-12', '30% off', P],
     ['ph-mybox', 'My box', F], ['ph-17', 'Saudi vs Morocco', P], ['ph-5', 'Half & half', P], ['ph-anim2', '30% in the app', F],
     ['ph-p13', 'Notifications', P], ['ph-4x4', '4×4 deal', .566], ['ph-2', 'Personality', P], ['ph-jump', 'Jump game', .789],
     ['ph-26', 'The body', P], ['ph-post7', 'Varieties', P], ['ph-ksa-iraq', 'Saudi vs Iraq', P]] },
+  { id: 'bk', name: 'Burger King', tile: '#ffffff', anim: true, items: [
+    ['bk-whopper', 'Whopper', F], ['bk-reel', 'Reel', P], ['bk-maze', 'Maze', F],
+    ['bk-99', 'Whopper for 99', F], ['bk-eid', 'Eid greeting', P], ['bk-post2', 'Iftar menu', P]] },
   { id: 'domty', name: 'Domty', tile: '#ffffff', anim: true, items: [
     ['domty-anim', 'Toast animation', P], ['domty-1', 'Pool day', F], ['domty-candy', 'Candy crush', F], ['domty-story', 'Story', P]] },
   { id: 'larch', name: 'Larch', tile: '#3d2a73', anim: true, fit: 'cover', items: [

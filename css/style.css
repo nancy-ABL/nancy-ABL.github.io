@@ -182,7 +182,6 @@ input,textarea{caret-color:var(--ink)}
 .typo-hint{text-align:center;margin-top:14px;font-size:16px;color:var(--ink)}
 .typo-list{list-style:none;padding:0 var(--gut);display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:10px}
 #typo{background:var(--blue)}
-#typo .sec-word{font-variation-settings:"wght" max(var(--w),560),"opsz" 144,"SOFT" 100,"WONK" 1}
 .typo-list button{min-height:46px;padding:0 20px;border-radius:99px;background:var(--ink);color:var(--yellow);font-weight:600;transition:background .2s,color .2s,transform .3s var(--spring)}
 .typo-list button:hover,.typo-list button.on{background:var(--yellow);color:var(--ink);transform:translateY(-2px)}
 
