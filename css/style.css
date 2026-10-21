@@ -126,6 +126,9 @@ input,textarea{caret-color:var(--ink)}
 .stack-count{font:italic 400 24px/1 var(--display);min-width:3.4em;text-align:center}
 
 /* ── CLIENTS ──────────────────────────── */
+/* social media sits on an ink field: the reels glow on dark */
+#social{--bg:#0a0a0a;--bg-2:#1b1a16;--ink:#fcfbf1;--ink-2:#c5c4b1;background:var(--bg);color:var(--ink)}
+#social .sec-band{--ink:#0a0a0a}
 .clients{display:flex;flex-direction:column}
 .client{display:grid;grid-template-columns:clamp(124px,11vw,170px) minmax(0,1fr);align-items:center;gap:0;padding:clamp(28px,3.4vw,48px) 0 clamp(28px,3.4vw,48px) var(--gut)}
 .client+.client{border-top:0}
